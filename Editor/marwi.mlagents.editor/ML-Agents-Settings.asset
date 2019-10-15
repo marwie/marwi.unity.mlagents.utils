@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d666a7d3f3a8435eb42f2d7d18d2d515, type: 3}
   m_Name: ML-Agents-Settings
   m_EditorClassIdentifier: 
-  lastTrainingProcessID: -1
+  lastTrainingProcessID: 14080
   Configurations:
   - foldout: 1
     name: Collab Agents

@@ -57,12 +57,16 @@ namespace marwi.mlagents.editor
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
             if (GUILayout.Button("Start")) StartTraining();
             if (GUILayout.Button("Continue")) ContinueTraining();
-            EditorGUI.EndDisabledGroup();
-
+            
             EditorGUI.BeginDisabledGroup(!ProcessIsRunning);
             if (GUILayout.Button("Stop")) StopTrainingProcess();
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
+            
+            EditorGUI.BeginDisabledGroup(ProcessIsRunning);
+            if (GUILayout.Button("Train in Editor")) StartTraining(true);
+            EditorGUI.EndDisabledGroup();
+
 
             if (GUILayout.Button("Copy Current Brain"))
             {
@@ -115,22 +119,26 @@ namespace marwi.mlagents.editor
             EditorGUI.EndDisabledGroup();
         }
 
-        private void StartTraining()
+        private void StartTraining(bool inEditor = false)
         {
-            StartTrainingProcess(GetTrainingArguments());
+            StartTrainingProcess(GetTrainingArguments(inEditor));
         }
         
-        private void ContinueTraining()
+        private void ContinueTraining(bool inEditor = false)
         {
-            StartTrainingProcess(GetTrainingArguments() + " --load");
+            StartTrainingProcess(GetTrainingArguments(inEditor) + " --load");
         }
 
-        private string GetTrainingArguments()
+        private string GetTrainingArguments(bool inEditor = false)
         {
-            var args = $@"mlagents-learn {settings.ActiveConfiguration.ConfigParam} --env={settings.ActiveConfiguration.ExecuteableParam} --train";
+            var args = $@"mlagents-learn {settings.ActiveConfiguration.ConfigParam} --train";
             // prepend anaconda
             if (!string.IsNullOrWhiteSpace(settings.ActiveConfiguration.anacondaEnvironmentName))
-                args = $"activate {settings.ActiveConfiguration.anacondaEnvironmentName} && " + args;
+                args = $"activate {settings.ActiveConfiguration.anacondaEnvironmentName} && {args}";
+            
+            if(!inEditor && settings.ActiveConfiguration.ExecuteableExists)
+                args = $"{args} --env={settings.ActiveConfiguration.ExecuteableParam}";
+            
             if (!string.IsNullOrWhiteSpace(settings.ActiveConfiguration.runID))
                 args += $" --run-id={settings.ActiveConfiguration.runID}";
             if (settings.ActiveConfiguration.CurriculumExists)

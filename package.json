@@ -1,8 +1,15 @@
 {
   "name": "com.marwi.unity.mlagents.utils",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "displayName": "marwi ML Agents",
   "type": "library",
   "hideInEditor": false,
-  "description": "Make ML Agents life a bit easier"
+  "description": "Make ML Agents life a bit easier",
+  "samples": [
+    {
+      "displayName": "Training Editor Preprocessors",
+      "description": "Import this package and add a Training Marker Component to the scenes you want to build for training to automatically set Acadamy Brains controlled",
+      "path": "Samples~/TrainingPreprocessors"
+    }
+  ]
 }
