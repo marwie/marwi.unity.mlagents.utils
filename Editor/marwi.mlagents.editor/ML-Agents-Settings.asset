@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d666a7d3f3a8435eb42f2d7d18d2d515, type: 3}
+  m_Name: ML-Agents-Settings
+  m_EditorClassIdentifier: 
+  lastTrainingProcessID: -1
+  Configurations:
+  - foldout: 1
+    name: Collab Agents
+    isActive: 1
+    relPathToMLAgentsDir: ../../ml-agents
+    relPathToExecutable: ml-agents/UnitySDK/builds/collab/UnityEnvironment.exe
+    relPathToConfig: ml-agents/config/trainer_config.yaml
+    brainNames: Assets/CollaborateAgents/Brains/CollabBrain.asset;
+    runID: my-run-id
+    anacondaEnvironmentName: ml-agents
+    relPathToCurriculum: ml-agents/config/curricula/collaborate
+  - foldout: 0
+    name: Test Agent
+    isActive: 0
+    relPathToMLAgentsDir: ../../ml-agents
+    relPathToExecutable: ml-agents/UnitySDK/builds/test/UnityEnvironment.exe
+    relPathToConfig: ml-agents/config/trainer_config.yaml
+    brainNames: Assets/TestAgent/TestAgentBrain.asset
+    runID: test
+    anacondaEnvironmentName: ml-agents
+    relPathToCurriculum: 
