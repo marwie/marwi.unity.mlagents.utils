@@ -1,15 +1,11 @@
-
 using System;
 using UnityEditor;
-#if UNITY_EDITOR
 using System.Runtime.CompilerServices;
 using UnityEngine.SceneManagement;
 using UnityEditor.Build.Reporting;
 using MLAgents;
 using UnityEditor.Build;
-using UnityEditor.Timeline;
 using UnityEngine;
-using UnityEngine.Timeline;
 
 namespace marwi.mlagents.utils
 {
@@ -71,5 +67,3 @@ namespace marwi.mlagents.utils
         }
     }
 }
-
-#endif
