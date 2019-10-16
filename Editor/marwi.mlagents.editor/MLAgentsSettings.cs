@@ -132,6 +132,11 @@ namespace AgentUtils.Editor
             foreach (var c in Configurations)
                 c.isActive = c == config;
         }
+
+        public void SetActiveExclusive(int index)
+        {
+            for (var i = 0; i < Configurations.Count; i++) Configurations[i].isActive = i == index;
+        }
     }
 
     [System.Serializable]
@@ -226,6 +231,8 @@ namespace AgentUtils.Editor
 //            Debug.Log("TODO, find name from path and remove from list");
 //            Debug.Log(absolutePathToBrain);
 //        }
+
+
 
         public IEnumerable<(string modelPathAbsolute, string assetPathAbsolute)> EachBrainPaths()
         {

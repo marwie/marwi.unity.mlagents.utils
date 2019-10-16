@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lastTrainingProcessID: 14080
   Configurations:
-  - foldout: 1
+  - foldout: 0
     name: Collab Agents
-    isActive: 1
+    isActive: 0
     relPathToMLAgentsDir: ../../ml-agents
     relPathToExecutable: ml-agents/UnitySDK/builds/collab/UnityEnvironment.exe
     relPathToConfig: ml-agents/config/trainer_config.yaml
@@ -26,7 +26,7 @@ MonoBehaviour:
     relPathToCurriculum: ml-agents/config/curricula/collaborate
   - foldout: 0
     name: Test Agent
-    isActive: 0
+    isActive: 1
     relPathToMLAgentsDir: ../../ml-agents
     relPathToExecutable: ml-agents/UnitySDK/builds/test/UnityEnvironment.exe
     relPathToConfig: ml-agents/config/trainer_config.yaml

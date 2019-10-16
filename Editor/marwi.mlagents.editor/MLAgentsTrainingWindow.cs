@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -36,6 +37,7 @@ namespace marwi.mlagents.editor
 
         private StringBuilder messageBuffer = new StringBuilder();
         private Vector2 scroll;
+        private string[] configurationOptions = new string[0];
 
         private void Log(string msg)
         {
@@ -45,24 +47,41 @@ namespace marwi.mlagents.editor
 
         private void OnGUI()
         {
-            EditorGUI.BeginDisabledGroup(!settings.HasActiveConfiguration || !settings.ActiveConfiguration.CanTrain);
-            
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Open Settings")) MLAgentsSettingsRegister.OpenSettings();
             EditorGUILayout.EndHorizontal();
-            EditorGUILayout.LabelField(settings.ActiveConfiguration != null ? settings.ActiveConfiguration?.name : "None", new GUIStyle(EditorStyles.boldLabel){fontSize = 12});
+                
+            if (settings.Configurations.Count + 1 != configurationOptions.Length)
+            {
+                configurationOptions = new string[settings.Configurations.Count + 1];
+                configurationOptions[0] = "None";
+                for (var i = 0; i < settings.Configurations.Count; i++)
+                    configurationOptions[i + 1] = settings.Configurations[i].name;
+            }
+            EditorGUI.BeginChangeCheck();
+            var selection = EditorGUILayout.Popup(settings.ActiveConfiguration != null ? settings.Configurations.IndexOf(settings.ActiveConfiguration) + 1 : 0,
+                configurationOptions);
+            if (EditorGUI.EndChangeCheck())
+            {
+                settings.SetActiveExclusive(selection - 1);
+                EditorUtility.SetDirty(settings);
+            }
             GUILayout.Space(6);
             
+            EditorGUI.BeginDisabledGroup(!settings.HasActiveConfiguration || !settings.ActiveConfiguration.CanTrain);
+
+
+
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
             if (GUILayout.Button("Start")) StartTraining();
             if (GUILayout.Button("Continue")) ContinueTraining();
-            
+
             EditorGUI.BeginDisabledGroup(!ProcessIsRunning);
             if (GUILayout.Button("Stop")) StopTrainingProcess();
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
-            
+
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
             if (GUILayout.Button("Train in Editor")) StartTraining(true);
             EditorGUI.EndDisabledGroup();
@@ -83,6 +102,7 @@ namespace marwi.mlagents.editor
                     Log("Copy Brain from \"" + source + "\" to \"" + target + "\"");
                     File.Copy(source, target, true);
                 }
+
                 AssetDatabase.Refresh();
 
                 if (exitAndContinue && !ProcessIsRunning)
@@ -105,9 +125,10 @@ namespace marwi.mlagents.editor
                 EditorGUILayout.HelpBox("Current Training Process ID: " + settings.lastTrainingProcessID, MessageType.Info);
                 GUILayout.Space(10);
             }
+
             EditorGUILayout.Space();
 
-            
+
             scroll = EditorGUILayout.BeginScrollView(scroll);
             var style = EditorStyles.label;
             style.wordWrap = true;
@@ -123,7 +144,7 @@ namespace marwi.mlagents.editor
         {
             StartTrainingProcess(GetTrainingArguments(inEditor));
         }
-        
+
         private void ContinueTraining(bool inEditor = false)
         {
             StartTrainingProcess(GetTrainingArguments(inEditor) + " --load");
@@ -135,17 +156,16 @@ namespace marwi.mlagents.editor
             // prepend anaconda
             if (!string.IsNullOrWhiteSpace(settings.ActiveConfiguration.anacondaEnvironmentName))
                 args = $"activate {settings.ActiveConfiguration.anacondaEnvironmentName} && {args}";
-            
-            if(!inEditor && settings.ActiveConfiguration.ExecuteableExists)
+
+            if (!inEditor && settings.ActiveConfiguration.ExecuteableExists)
                 args = $"{args} --env={settings.ActiveConfiguration.ExecuteableParam}";
-            
+
             if (!string.IsNullOrWhiteSpace(settings.ActiveConfiguration.runID))
                 args += $" --run-id={settings.ActiveConfiguration.runID}";
             if (settings.ActiveConfiguration.CurriculumExists)
                 args += $" --curriculum={settings.ActiveConfiguration.CurriculumParam}";
             return args;
         }
-
 
 
         private bool ProcessIsRunning => trainingsProcess != null && !trainingsProcess.HasExited;
