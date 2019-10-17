@@ -12,23 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d666a7d3f3a8435eb42f2d7d18d2d515, type: 3}
   m_Name: ML-Agents-Settings
   m_EditorClassIdentifier: 
-  lastTrainingProcessID: 14080
+  lastTrainingProcessID: 9220
   Configurations:
-  - foldout: 0
+  - foldout: 1
     name: Collab Agents
-    isActive: 0
+    isActive: 1
     relPathToMLAgentsDir: ../../ml-agents
-    relPathToExecutable: ml-agents/UnitySDK/builds/collab/UnityEnvironment.exe
+    relPathToExecutable: 
     relPathToConfig: ml-agents/config/trainer_config.yaml
     brainNames: Assets/CollaborateAgents/Brains/CollabBrain.asset;
     runID: my-run-id
     anacondaEnvironmentName: ml-agents
     relPathToCurriculum: ml-agents/config/curricula/collaborate
-  - foldout: 0
+  - foldout: 1
     name: Test Agent
-    isActive: 1
+    isActive: 0
     relPathToMLAgentsDir: ../../ml-agents
-    relPathToExecutable: ml-agents/UnitySDK/builds/test/UnityEnvironment.exe
+    relPathToExecutable: 
     relPathToConfig: ml-agents/config/trainer_config.yaml
     brainNames: Assets/TestAgent/TestAgentBrain.asset
     runID: test

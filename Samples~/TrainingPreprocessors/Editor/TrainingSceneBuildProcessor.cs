@@ -9,6 +9,8 @@ using UnityEngine;
 
 namespace marwi.mlagents.utils
 {
+    // this can be moded to ml-agents/Editor and removed as as sample as soon as mlagents is available as a package
+    // because we need access to the academy
     [InitializeOnLoad]
     public class TrainingSceneBuildProcessor : IPreprocessBuildWithReport
     {
@@ -49,7 +51,7 @@ namespace marwi.mlagents.utils
                 Academy academy = null;
                 foreach (var root in scene.GetRootGameObjects())
                 {
-                    if (!marker)
+                    if (!marker || !marker.enabled)
                         marker = root.GetComponentInChildren<TrainingSceneMarker>();
                     if (!academy)
                         academy = root.GetComponentInChildren<Academy>();
@@ -57,7 +59,7 @@ namespace marwi.mlagents.utils
                         break;
                 }
 
-                if (!marker || !academy || academy == null) continue;
+                if (!marker || !marker.enabled || !academy || academy == null) continue;
                 foreach (var hub in academy.broadcastHub.broadcastingBrains)
                 {
                     Debug.Log("Set Controlled: " + hub.name + ", " + controlled, academy);

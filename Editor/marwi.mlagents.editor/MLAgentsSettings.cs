@@ -172,7 +172,7 @@ namespace AgentUtils.Editor
             };
         }
 
-        public bool CanTrain => MLAgentsDirExists && ExecuteableExists && ConfigExists && HasValidRunID && !HasInvalidBrain();
+        public bool CanTrain => MLAgentsDirExists && ConfigExists && HasValidRunID && !HasInvalidBrain();
 
         public string ConfigParam
         {
@@ -464,24 +464,7 @@ namespace AgentUtils.Editor
 
                         EditorGUILayout.EndHorizontal();
 
-                        EditorGUILayout.BeginHorizontal();
-                        bgIdent = GUIColorHelper.SetBackgroundColor(new Color(1, .8f, .8f), !config.ExecuteableExists);
-                        config.relPathToExecutable =
-                            EditorGUILayout.TextField("Executable Rel.", config.relPathToExecutable, new GUIStyle(EditorStyles.textField));
-                        GUIColorHelper.ResetBackgroundColor(bgIdent);
-                        EditorGUI.BeginDisabledGroup(!config.MLAgentsDirExists);
-                        if (GUILayout.Button("Select", GUILayout.ExpandWidth(false)))
-                        {
-                            var path = PathHelper.MakeAbsolute(config.relPathToExecutable, config.AbsolutePathToMlAgentsDir);
-                            var selectedPath = EditorUtility.OpenFilePanel("Select Trainings Executable",
-                                Directory.Exists(path) ? path : config.AbsolutePathToMlAgentsDir,
-                                "exe");
-                            if (File.Exists(selectedPath))
-                                config.relPathToExecutable = PathHelper.MakeRelative(selectedPath, config.AbsolutePathToMlAgentsDir);
-                        }
-
-                        EditorGUI.EndDisabledGroup();
-                        EditorGUILayout.EndHorizontal();
+                      
 
                         EditorGUILayout.BeginHorizontal();
                         bgIdent = GUIColorHelper.SetBackgroundColor(new Color(1, .8f, .8f), !config.ConfigExists);
@@ -523,6 +506,26 @@ namespace AgentUtils.Editor
 
 
                         EditorGUILayout.LabelField("Optional", EditorStyles.miniBoldLabel);
+                        
+                        EditorGUILayout.BeginHorizontal();
+                        bgIdent = GUIColorHelper.SetBackgroundColor(new Color(1, .8f, .8f), !string.IsNullOrWhiteSpace(config.relPathToExecutable) && !config.ExecuteableExists);
+                        config.relPathToExecutable =
+                            EditorGUILayout.TextField("Executable Rel.", config.relPathToExecutable, new GUIStyle(EditorStyles.textField));
+                        GUIColorHelper.ResetBackgroundColor(bgIdent);
+                        EditorGUI.BeginDisabledGroup(!config.MLAgentsDirExists);
+                        if (GUILayout.Button("Select", GUILayout.ExpandWidth(false)))
+                        {
+                            var path = PathHelper.MakeAbsolute(config.relPathToExecutable, config.AbsolutePathToMlAgentsDir);
+                            var selectedPath = EditorUtility.OpenFilePanel("Select Trainings Executable",
+                                Directory.Exists(path) ? path : config.AbsolutePathToMlAgentsDir,
+                                "exe");
+                            if (File.Exists(selectedPath))
+                                config.relPathToExecutable = PathHelper.MakeRelative(selectedPath, config.AbsolutePathToMlAgentsDir);
+                        }
+
+                        EditorGUI.EndDisabledGroup();
+                        EditorGUILayout.EndHorizontal();
+                        
                         config.anacondaEnvironmentName = EditorGUILayout.TextField("Anaconda Env.", config.anacondaEnvironmentName);
 
                         EditorGUILayout.BeginHorizontal();

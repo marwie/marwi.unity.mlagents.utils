@@ -68,23 +68,24 @@ namespace marwi.mlagents.editor
             }
             GUILayout.Space(6);
             
+            // ReSharper disable once PossibleNullReferenceException
             EditorGUI.BeginDisabledGroup(!settings.HasActiveConfiguration || !settings.ActiveConfiguration.CanTrain);
-
 
 
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
             if (GUILayout.Button("Start")) StartTraining();
             if (GUILayout.Button("Continue")) ContinueTraining();
+            EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginDisabledGroup(!ProcessIsRunning);
             if (GUILayout.Button("Stop")) StopTrainingProcess();
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
 
-            EditorGUI.BeginDisabledGroup(ProcessIsRunning);
-            if (GUILayout.Button("Train in Editor")) StartTraining(true);
-            EditorGUI.EndDisabledGroup();
+//            EditorGUI.BeginDisabledGroup(ProcessIsRunning);
+//            if (GUILayout.Button("Train in Editor")) StartTraining(true);
+//            EditorGUI.EndDisabledGroup();
 
 
             if (GUILayout.Button("Copy Current Brain"))
@@ -168,7 +169,7 @@ namespace marwi.mlagents.editor
         }
 
 
-        private bool ProcessIsRunning => trainingsProcess != null && !trainingsProcess.HasExited;
+        public bool ProcessIsRunning => trainingsProcess != null && !trainingsProcess.HasExited;
 
         private void TryRegainPrevTrainingProcess()
         {
