@@ -21,8 +21,8 @@ Features:
 - Config Rel*: Relative Path from ML-Agents root to the yaml configuration file used for training
 - Brain Names*: Local Asset Paths to the Brains to be trained, separated by ";"
 - Executable Rel: (optional) Relative Path to the executable used for training, if none defined or not found training will run in the editor
-- Anaconda Env: Name of your anaconda environment that will activate for training
-- Curriculum Dir Rel: Relative Path from Ml-Agents root to the curriculum folder used for training
+- Anaconda Env: (optional) Name of your anaconda environment that will activate for training
+- Curriculum Dir Rel: (optional) Relative Path from Ml-Agents root to the curriculum folder used for training
 
 Detect Problems Button:
 - Checks if json files in curriculum directory (if defined) match any Brain in your project
