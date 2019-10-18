@@ -44,7 +44,7 @@ namespace Helper
             if (!agent) return false;
             if (!agent.brain) return false;
             var vecObs = AgentUtils.GetVectorObservationCount(agent);
-            if (vecObs <= 0) return false;
+            if (vecObs < 0) return false;
             if (agent.brain.brainParameters.vectorObservationSize == vecObs) return false;
             agent.brain.brainParameters.vectorObservationSize = vecObs;
             EditorUtility.SetDirty(agent.brain);
