@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using MLAgents;
-using UnityEditor.Experimental.SceneManagement;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor.Experimental.SceneManagement;
+
+#endif
 
 namespace Helper
 {
@@ -29,11 +32,13 @@ namespace Helper
                 var type = GetBaseTypeBeforeMonoBehaviour(agent.GetType());
                 m_Info = type.GetField("m_Info", BindingFlags.NonPublic | BindingFlags.Instance);
             }
+
             if (m_Info == null)
             {
                 Debug.LogWarning("Failed to get FieldInfo", agent);
                 return -1;
             }
+
             var info = (AgentInfo) m_Info.GetValue(agent);
             info.vectorObservation = new List<float>();
             m_Info.SetValue(agent, info);
@@ -44,7 +49,11 @@ namespace Helper
 
         public static bool CanInitialize(this Agent agent)
         {
+#if UNITY_EDITOR
             return PrefabStageUtility.GetPrefabStage(agent.gameObject) == null;
+#else
+            return true;
+#endif
         }
     }
 }
