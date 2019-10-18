@@ -1,6 +1,6 @@
 # ML Agents Helper
 
-This package aims to make development with ML-Agents quicker and easier.
+This package aims to make development with [ML-Agents](https://github.com/Unity-Technologies/ml-agents/) quicker and easier.
 
 Features:
 - Setup Training Configurations from Unity Project Settings
