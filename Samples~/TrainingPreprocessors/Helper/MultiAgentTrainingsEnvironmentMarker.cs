@@ -15,11 +15,12 @@ namespace Helper
     public class MultiAgentTrainingsEnvironmentMarker : MonoBehaviour
     {
 #if UNITY_EDITOR
+#pragma warning disable CS0649
         [SerializeField] private Transform Environment;
         [SerializeField] private int CopyCount = 0;
+#pragma warning restore CS0649
 
-        [Header("Allowed Components")] 
-        public bool Camera = false;
+        [Header("Allowed Components")] public bool Camera = false;
 
         [HideInInspector] [SerializeField] private Transform copyTarget;
 
@@ -62,7 +63,8 @@ namespace Helper
             // cleanup
             environmentTemplate.SafeDestroy();
             HideAndDisablePickingOfCopiedEnvironments();
-            Debug.Log("Created " + copyTarget.childCount + " Training Copies of " + Environment.name, this);
+            if (copyTarget)
+                Debug.Log("Created " + copyTarget.childCount + " Training Copies of " + Environment.name, this);
         }
 
         [ContextMenu(nameof(DestroyCopies))]
