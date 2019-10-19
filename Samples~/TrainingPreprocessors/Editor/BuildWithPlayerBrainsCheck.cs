@@ -9,7 +9,7 @@ namespace Helper
 {
     public class BuildWithPlayerBrainsCheck : IPreprocessBuildWithReport
     {
-        public int callbackOrder { get; }
+        public int callbackOrder => 10000;
 
         public void OnPreprocessBuild(BuildReport report)
         {
