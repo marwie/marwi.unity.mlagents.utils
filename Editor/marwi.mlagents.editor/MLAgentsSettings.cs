@@ -37,24 +37,28 @@ namespace AgentUtils.Editor
                     foreach (var guid in settingsInstances)
                     {
                         var path = AssetDatabase.GUIDToAssetPath(guid);
-                        m_relativeSettingsPath = path;
+                        if (path.ToLowerInvariant().StartsWith("Assets", StringComparison.Ordinal))
+                        {
+                            m_relativeSettingsPath = path;
 //                        Debug.Log($"Resolved ML-Agents Settings at \"{m_relativeSettingsPath}\"");
-                        break;
+                            break; 
+                        }
                     }
 
                     if (!SettingsExist)
                     {
-                        var scriptGuids = AssetDatabase.FindAssets(nameof(MLAgentsSettings));
-                        foreach (var guid in scriptGuids)
-                        {
-                            var path = AssetDatabase.GUIDToAssetPath(guid);
-                            if (path.EndsWith(".cs"))
-                            {
-                                m_relativeSettingsPath = $"{path.Substring(0, path.LastIndexOf('/'))}/ML-Agents-Settings.asset";
-                                Debug.Log($"Create ML Agents Settings at \"{m_relativeSettingsPath}\"");
-                                break;
-                            }
-                        }
+                        m_relativeSettingsPath = $"Assets/ML-Agents-Settings.asset"; 
+//                        var scriptGuids = AssetDatabase.FindAssets(nameof(MLAgentsSettings));
+//                        foreach (var guid in scriptGuids)
+//                        {
+//                            var path = AssetDatabase.GUIDToAssetPath(guid);
+//                            if (path.EndsWith(".cs"))
+//                            {
+//                                m_relativeSettingsPath = $"{path.Substring(0, path.LastIndexOf('/'))}/ML-Agents-Settings.asset";
+//                                Debug.Log($"Create ML Agents Settings at \"{m_relativeSettingsPath}\"");
+//                                break;
+//                            }
+//                        }
                     }
                 }
 
@@ -116,7 +120,7 @@ namespace AgentUtils.Editor
         public bool HasActiveConfiguration => ActiveConfiguration != null;
         public TrainingsConfiguration ActiveConfiguration => Configurations.FirstOrDefault(c => c.isActive);
 
-        [SerializeField] public List<TrainingsConfiguration> Configurations;
+        [SerializeField] public List<TrainingsConfiguration> Configurations = new List<TrainingsConfiguration>();
 
 
         public void AddConfiguration()
