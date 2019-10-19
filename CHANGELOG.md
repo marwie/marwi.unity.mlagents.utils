@@ -1,4 +1,13 @@
 
+[0.0.4] - 2019-10-19
+menu namespace cleanup
+warning if playerbrain is in trainingsbuild
+auto-multiagent environment generation for trainings builds
+auto update observations improved
+some utils added
+some general bugs fixed
+build and train button
+
 [0.0.3] - 2019-10-17
 can auto collect vector observations now for marked agents
 
