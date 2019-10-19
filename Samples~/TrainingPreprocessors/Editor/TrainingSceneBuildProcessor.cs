@@ -14,7 +14,7 @@ namespace marwi.mlagents.utils
     [InitializeOnLoad]
     public class TrainingSceneBuildProcessor : IPreprocessBuildWithReport
     {
-        public int callbackOrder { get; }
+        public int callbackOrder => 0;
         
         static TrainingSceneBuildProcessor()
         {
@@ -25,14 +25,8 @@ namespace marwi.mlagents.utils
         {
             switch (obj)
             {
-                case PlayModeStateChange.EnteredEditMode:
-                    break;
                 case PlayModeStateChange.ExitingEditMode:
                     SetAcademyBrainsControlled(false);
-                    break;
-                case PlayModeStateChange.EnteredPlayMode:
-                    break;
-                case PlayModeStateChange.ExitingPlayMode:
                     break;
             }
         }

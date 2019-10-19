@@ -34,7 +34,10 @@ namespace Helper
             switch (mode)
             {
                 case PlayModeStateChange.ExitingEditMode:
-                    foreach (var env in EachTrainingsEnvironmentMarker()) env.DestroyCopies();
+                    foreach (var env in EachTrainingsEnvironmentMarker())
+                    {
+                        env.DestroyCopies();
+                    }
                     break;
             }
         }
