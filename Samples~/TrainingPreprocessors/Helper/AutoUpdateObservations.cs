@@ -1,14 +1,14 @@
 ﻿
 using UnityEngine;
 using System;
-using System.Collections.Generic;
 using MLAgents;
+using UnityEngine.Serialization;
+using UnityEngine.SceneManagement;
 
 #if UNITY_EDITOR
-using UnityEditor.Build.Reporting;
 using UnityEditor;
-using UnityEditor.Build;
 using UnityEditor.Callbacks;
+using UnityEditor.SceneManagement;
 #endif
 
 namespace Helper
@@ -17,12 +17,12 @@ namespace Helper
     {
         public enum AutoTime
         {
-            OnReload,
-//            OnPreprocessBuild
+            OnSceneSave = 0,
+            OnReload = 1
         }
         
 #if UNITY_EDITOR
-        [SerializeField] private AutoTime UpdateTime = AutoTime.OnReload;
+        [FormerlySerializedAs("UpdateTime")] [SerializeField] private AutoTime AutoUpdate = AutoTime.OnSceneSave;
         [SerializeField] private Agent Agent;
 
         private void OnValidate()
@@ -39,43 +39,69 @@ namespace Helper
 
         private bool UpdateObservations(AutoTime time, bool force = false)
         {
-            if (!force && (time != UpdateTime || !enabled)) return false;
-            var agent = Agent;
-            if (!agent) return false;
-            if (!agent.brain) return false;
-            var vecObs = AgentUtils.GetVectorObservationCount(agent);
-            if (vecObs < 0) return false;
-            if (agent.brain.brainParameters.vectorObservationSize == vecObs) return false;
-            agent.brain.brainParameters.vectorObservationSize = vecObs;
-            EditorUtility.SetDirty(agent.brain);
-            Debug.Log("UPDATED " + agent.brain.name + ": " + vecObs, agent.brain);
-            return true;
+            try
+            {
+                if (!force && (time != AutoUpdate || !enabled)) return false;
+                var agent = Agent;
+                if (!agent) return false;
+                if (!agent.brain) return false;
+                var vecObs = AgentUtils.GetVectorObservationCount(agent);
+                if (vecObs < 0) return false;
+                if (agent.brain.brainParameters.vectorObservationSize == vecObs) return false;
+                agent.brain.brainParameters.vectorObservationSize = vecObs;
+                EditorUtility.SetDirty(agent.brain);
+                Debug.Log("UPDATED " + agent.brain.name + ": " + vecObs, agent.brain);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e, Agent);
+                return false;
+            }
         }
-        
-        
-        
+
+
+        [InitializeOnLoadMethod]
+        private static void OnLoad()
+        {
+            EditorSceneManager.sceneSaving += OnSceneSaving;
+            EditorApplication.playModeStateChanged += OnPlayModeChange;
+        }
+
+        private static void OnPlayModeChange(PlayModeStateChange obj)
+        {
+            switch (obj)
+            {
+                case PlayModeStateChange.ExitingEditMode:
+                    if(Run(AutoTime.OnReload, true))
+                        AssetDatabase.SaveAssets();
+                    break;
+            }
+        }
+
+        private static void OnSceneSaving(Scene scene, string path)
+        {
+            if(Run(AutoTime.OnSceneSave))
+                AssetDatabase.SaveAssets();
+        }
+
         [DidReloadScripts]
-        public static void OnReloadScripts()
+        private static void OnReloadScripts()
         {
             if (Application.isPlaying) return;
             if(Run(AutoTime.OnReload))
                 AssetDatabase.SaveAssets();
         }
 
-        private static readonly HashSet<Type> updated = new HashSet<Type>();
-        private static bool Run(AutoTime time)
+        private static bool Run(AutoTime time, bool force = false)
         {
             var markedAgents = FindObjectsOfType<AutoUpdateObservations>();
             if (markedAgents.Length <= 0) return false;
-            updated.Clear();
             var anyChanged = false;
             foreach (var auto in markedAgents)
             {
-                if (!auto) continue;
-                var type = auto.GetType();
-                if (updated.Contains(type)) continue;
-                updated.Add(type);
-                if (auto.UpdateObservations(time))
+                if (!auto) continue; 
+                if (auto.UpdateObservations(time, force))
                     anyChanged = true;
             }
 
