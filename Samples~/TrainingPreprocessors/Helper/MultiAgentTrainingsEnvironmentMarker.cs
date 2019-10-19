@@ -44,6 +44,7 @@ namespace Helper
             environmentTemplate = Instantiate(Environment.gameObject);
             environmentTemplate.name = Environment.name + "-Template";
             environmentTemplate.CollectComponents(
+                typeof(MultiAgentTrainingsEnvironmentMarker),
                 typeof(AutoUpdateObservations),
                 typeof(AudioListener),
                 Camera ? typeof(Camera) : null
