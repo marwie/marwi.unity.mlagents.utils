@@ -1,7 +1,10 @@
 using System;
+using System.Linq;
 using System.Security.Cryptography;
+using marwi.mlagents;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Helper
 {
@@ -15,9 +18,10 @@ namespace Helper
         [SerializeField] private Transform Environment;
         [SerializeField] private int CopyCount = 0;
 
-        [HideInInspector]
-        [SerializeField]
-        private Transform copyTarget;
+        [Header("Allowed Components")] 
+        public bool Camera = false;
+
+        [HideInInspector] [SerializeField] private Transform copyTarget;
 
         public int Count => CopyCount;
 
@@ -33,10 +37,19 @@ namespace Helper
             if (copyTarget == null) copyTarget = new GameObject(Environment.name + "-Copies").transform;
             DestroyCopies();
 
-//            var isPrefab = PrefabUtility.IsAnyPrefabInstanceRoot(Environment.gameObject);
+            // clean environment of any scripts we dont want in our copies
+            var environmentTemplate = Instantiate(Environment.gameObject);
+            environmentTemplate.name = Environment.name + "-Template";
+            environmentTemplate.CollectComponents(
+                typeof(AutoUpdateObservations),
+                typeof(AudioListener),
+                Camera ? typeof(Camera) : null
+            ).SafeDestroy();
+
+            // create copies
             for (var i = 0; i < CopyCount; i++)
             {
-                var instance = Instantiate(Environment, copyTarget, false);
+                var instance = Instantiate(environmentTemplate, copyTarget, false);
                 if (!instance || instance == null)
                 {
                     Debug.LogWarning("Failed to create Environment Instance for " + Environment.name, this);
@@ -44,9 +57,10 @@ namespace Helper
                 }
 
                 instance.transform.position = Environment.transform.position + new Vector3(totalBounds.size.x * 1.1f * (i + 1), 0, 0);
-
             }
-            
+
+            // cleanup
+            environmentTemplate.SafeDestroy();
             HideAndDisablePickingOfCopiedEnvironments();
             Debug.Log("Created " + copyTarget.childCount + " Training Copies of " + Environment.name, this);
         }
@@ -61,16 +75,14 @@ namespace Helper
             for (var i = copyTarget.childCount - 1; i >= 0; i--)
             {
                 var child = copyTarget.GetChild(i);
-                if (Application.isPlaying)
-                    Destroy(child.gameObject);
-                else DestroyImmediate(child.gameObject);
+                child.gameObject.SafeDestroy();
             }
+
             Debug.Log("Removed " + count + " Training Copies of " + Environment.name, this);
-            
-            if (Application.isPlaying)
-                Destroy(copyTarget.gameObject);
-            else DestroyImmediate(copyTarget.gameObject);
+
+            copyTarget.gameObject.SafeDestroy();
         }
+
 
         public void HideAndDisablePickingOfCopiedEnvironments()
         {

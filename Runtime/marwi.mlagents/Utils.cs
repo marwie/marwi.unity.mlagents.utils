@@ -1,5 +1,9 @@
+using System;
+using System.Collections.Generic;
 using System.Security;
 using UnityEngine;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace marwi.mlagents
 {
@@ -26,6 +30,39 @@ namespace marwi.mlagents
                 vec.z += 360;
             vec -= Vector3.one * 180;
             return vec;
+        }
+        
+        
+        
+        public static void SafeDestroy(this Object obj)
+        {
+            if (!obj) return;
+            if (obj is Transform t)
+                obj = t.gameObject;
+            if (Application.isPlaying)
+                Object.Destroy(obj);
+            else Object.DestroyImmediate(obj);
+        }
+
+        public static void SafeDestroy(this IEnumerable<Object> objs)
+        {
+            if (objs == null) return;
+            foreach(var obj in objs)
+                obj.SafeDestroy();
+        }
+
+        public static List<Component> CollectComponents(this GameObject obj, params Type[] types)
+        {
+            if (!obj) return null;
+            var list = new List<Component>();
+            foreach (var type in types)
+            {
+                if(type == null) continue;
+                var components = obj.GetComponentsInChildren(type);
+                list.AddRange(components);
+            }
+
+            return list;
         }
     }
 }

@@ -6,7 +6,9 @@ using System.Text;
 using System.Threading;
 using AgentUtils.Editor;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace marwi.mlagents.editor
 {
@@ -48,7 +50,7 @@ namespace marwi.mlagents.editor
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Open Settings")) MLAgentsSettingsRegister.OpenSettings();
             EditorGUILayout.EndHorizontal();
-                
+
             if (settings.Configurations.Count + 1 != configurationOptions.Length)
             {
                 configurationOptions = new string[settings.Configurations.Count + 1];
@@ -56,6 +58,7 @@ namespace marwi.mlagents.editor
                 for (var i = 0; i < settings.Configurations.Count; i++)
                     configurationOptions[i + 1] = settings.Configurations[i].name;
             }
+
             EditorGUI.BeginChangeCheck();
             var selection = EditorGUILayout.Popup(settings.ActiveConfiguration != null ? settings.Configurations.IndexOf(settings.ActiveConfiguration) + 1 : 0,
                 configurationOptions);
@@ -64,11 +67,23 @@ namespace marwi.mlagents.editor
                 settings.SetActiveExclusive(selection - 1);
                 EditorUtility.SetDirty(settings);
             }
+
             GUILayout.Space(6);
-            
+
             // ReSharper disable once PossibleNullReferenceException
             EditorGUI.BeginDisabledGroup(!settings.HasActiveConfiguration || !settings.ActiveConfiguration.CanTrain);
 
+            EditorGUILayout.BeginHorizontal();
+            EditorGUI.BeginDisabledGroup(ProcessIsRunning);
+            if (GUILayout.Button("Build and Start"))
+            {
+                BuildPipeline.BuildPlayer(new[] {SceneManager.GetActiveScene().path}, settings.ActiveConfiguration.AbsolutePathToExecuteable,
+                    BuildTarget.StandaloneWindows, BuildOptions.None);
+                StartTraining();
+            }
+
+            EditorGUI.EndDisabledGroup();
+            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);

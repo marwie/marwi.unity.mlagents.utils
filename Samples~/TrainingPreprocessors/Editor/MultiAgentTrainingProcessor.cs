@@ -33,11 +33,6 @@ namespace Helper
         {
             switch (mode)
             {
-                case PlayModeStateChange.EnteredEditMode:
-                    Debug.Log("ENTER EDITMODE");
-                    foreach(var env in EachTrainingsEnvironmentMarker()) env.HideAndDisablePickingOfCopiedEnvironments();
-                    break;
-                
                 case PlayModeStateChange.ExitingEditMode:
                     foreach (var env in EachTrainingsEnvironmentMarker()) env.DestroyCopies();
                     break;
@@ -46,7 +41,7 @@ namespace Helper
 
         private static IEnumerable<MultiAgentTrainingsEnvironmentMarker> EachTrainingsEnvironmentMarker()
         {
-            var trainingScene = Object.FindObjectOfType<TrainingSceneMarker>();
+            var trainingScene = Object.FindObjectOfType<TrainingSceneMarker>(); 
             if (!trainingScene || !trainingScene.enabled)
             {
 //                Debug.Log("Not a training scene");
@@ -55,7 +50,7 @@ namespace Helper
             var copyGridMarkers = Object.FindObjectsOfType<MultiAgentTrainingsEnvironmentMarker>();
             foreach (var copy in copyGridMarkers)
             {
-                if (copy.enabled)
+                if (copy && copy.enabled)
                     yield return copy;
             }
         }
