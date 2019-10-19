@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -8,7 +7,6 @@ using System.Threading;
 using AgentUtils.Editor;
 using UnityEditor;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace marwi.mlagents.editor
 {
@@ -18,7 +16,7 @@ namespace marwi.mlagents.editor
 
         private Process trainingsProcess;
 
-        [MenuItem("marwi/ML-Agents-Training")]
+        [MenuItem(Namespace.Base + "/Open Training Window")]
         public static MLAgentsTrainingWindow OpenWindow()
         {
             var window = GetWindow<MLAgentsTrainingWindow>();

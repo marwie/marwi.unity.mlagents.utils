@@ -6,6 +6,7 @@ using UnityEngine.Serialization;
 using UnityEngine.SceneManagement;
 
 #if UNITY_EDITOR
+using marwi.mlagents.editor;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.SceneManagement;
@@ -25,18 +26,6 @@ namespace Helper
         [FormerlySerializedAs("UpdateTime")] [SerializeField] private AutoTime AutoUpdate = AutoTime.OnSceneSave;
         [SerializeField] private Agent Agent;
 
-        private void OnValidate()
-        {
-            if (Agent == null)
-                Agent = this.GetComponent<Agent>();
-        }
-
-        [ContextMenu(nameof(AutoUpdateNow))]
-        private void AutoUpdateNow()
-        {
-            UpdateObservations(AutoTime.OnReload, true);
-        }
-
         private bool UpdateObservations(AutoTime time, bool force = false)
         {
             try
@@ -50,7 +39,7 @@ namespace Helper
                 if (agent.brain.brainParameters.vectorObservationSize == vecObs) return false;
                 agent.brain.brainParameters.vectorObservationSize = vecObs;
                 EditorUtility.SetDirty(agent.brain);
-                Debug.Log("UPDATED " + agent.brain.name + ": " + vecObs, agent.brain);
+                Debug.Log($"<b>UPDATED {agent.brain.name} OBSERVATIONS</b>: {vecObs}", agent.brain);
                 return true;
             }
             catch (Exception e)
@@ -59,6 +48,26 @@ namespace Helper
                 return false;
             }
         }
+        
+        private void OnValidate()
+        {
+            if (Agent == null)
+                Agent = this.GetComponent<Agent>();
+        }
+
+        [ContextMenu(nameof(AutoUpdateNow))]
+        private void AutoUpdateNow()
+        {
+            UpdateObservations(AutoTime.OnReload, true); 
+        }
+
+        [MenuItem(Namespace.Base + "Auto Update Marked Agents Observations")]
+        private static void UpdateMarkedAgents()
+        {
+            Debug.Log("Updating Marked Agents");
+            Run(AutoTime.OnReload, true); 
+        }
+
 
 
         [InitializeOnLoadMethod]
@@ -104,7 +113,6 @@ namespace Helper
                 if (auto.UpdateObservations(time, force))
                     anyChanged = true;
             }
-
             return anyChanged;
         }
 
