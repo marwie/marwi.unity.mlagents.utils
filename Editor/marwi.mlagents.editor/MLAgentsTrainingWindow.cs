@@ -205,7 +205,7 @@ namespace marwi.mlagents.editor
                 {
                     this.trainingsProcess = Process.GetProcessById(settings.lastTrainingProcessID);
                     RegisterTrainingProcessOutput();
-                    Log("Resolved Process: " + this.trainingsProcess.ProcessName + ", " + this.trainingsProcess.Id);
+                    Log("Recovered Process: " + this.trainingsProcess.ProcessName + ", " + this.trainingsProcess.Id);
                 }
             }
             catch (Exception)
@@ -246,6 +246,7 @@ namespace marwi.mlagents.editor
             RegisterTrainingProcessOutput();
             Log("-----------------------");
             Log("Started Training \n" + info.WorkingDirectory + "\n" + info.Arguments);
+            Log("Process ID: " + process.Id);
         }
 
         private void RegisterTrainingProcessOutput()

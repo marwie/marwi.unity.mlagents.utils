@@ -20,10 +20,21 @@ namespace Helper
         [SerializeField] private int CopyCount = 0;
 #pragma warning restore CS0649
 
+        public enum EnterPlayModeBehaviour
+        {
+            KeepCopies = 0,
+            DestroyCopies = 1
+        }
+
+        public EnterPlayModeBehaviour OnPlayMode = EnterPlayModeBehaviour.DestroyCopies;
+
+        public bool DestroyCopiesInPlayMode => OnPlayMode == EnterPlayModeBehaviour.DestroyCopies;
+
         [Header("Allowed Components")] public bool Camera = false;
 
         [HideInInspector] [SerializeField] private Transform copyTarget;
         [HideInInspector] [SerializeField] private GameObject environmentTemplate;
+
 
         public int Count => CopyCount;
 

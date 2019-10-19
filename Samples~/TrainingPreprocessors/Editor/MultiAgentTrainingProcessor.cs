@@ -13,7 +13,7 @@ namespace Helper
     public class MultiAgentTrainingProcessor : IPreprocessBuildWithReport
     {
         public int callbackOrder { get; }
-        
+
         public void OnPreprocessBuild(BuildReport report)
         {
             foreach (var env in EachTrainingsEnvironmentMarker())
@@ -36,20 +36,23 @@ namespace Helper
                 case PlayModeStateChange.ExitingEditMode:
                     foreach (var env in EachTrainingsEnvironmentMarker())
                     {
-                        env.DestroyCopies();
+                        if (env.DestroyCopiesInPlayMode)
+                            env.DestroyCopies();
                     }
+
                     break;
             }
         }
 
         private static IEnumerable<MultiAgentTrainingsEnvironmentMarker> EachTrainingsEnvironmentMarker()
         {
-            var trainingScene = Object.FindObjectOfType<TrainingSceneMarker>(); 
+            var trainingScene = Object.FindObjectOfType<TrainingSceneMarker>();
             if (!trainingScene || !trainingScene.enabled)
             {
 //                Debug.Log("Not a training scene");
                 yield break;
             }
+
             var copyGridMarkers = Object.FindObjectsOfType<MultiAgentTrainingsEnvironmentMarker>();
             foreach (var copy in copyGridMarkers)
             {
