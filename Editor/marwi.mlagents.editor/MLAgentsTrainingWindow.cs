@@ -43,9 +43,13 @@ namespace marwi.mlagents.editor
 
         private void Log(string msg)
         {
-            messageBuffer.Insert(0, msg + "\n");
+            messageBuffer.Insert(0, $"{msg}\n");
         }
 
+        private void LogWarning(string msg)
+        {
+            messageBuffer.Insert(0, $"<color=#555500>{msg}</color>\n");
+        }
 
         private void OnGUI()
         {
@@ -112,7 +116,7 @@ namespace marwi.mlagents.editor
                     StopTrainingProcess();
                 }
 
-                foreach (var brains in settings.ActiveConfiguration.EachBrainPaths())
+                foreach (var brains in settings.ActiveConfiguration.EnumerateBrainModelPaths())
                 {
                     var source = brains.modelPathAbsolute;
                     var target = brains.assetPathAbsolute;
@@ -180,7 +184,12 @@ namespace marwi.mlagents.editor
             if (!string.IsNullOrWhiteSpace(settings.ActiveConfiguration.runID))
                 args += $" --run-id={settings.ActiveConfiguration.runID}";
             if (settings.ActiveConfiguration.CurriculumExists)
-                args += $" --curriculum={settings.ActiveConfiguration.CurriculumParam}";
+            {
+                if (settings.ActiveConfiguration.TryCreateCurriculumFileAndGetPathParam(out var curriculumParam))
+                    args += $" --curriculum={curriculumParam}";
+                else LogWarning("Could not create curriculum file");
+            }
+
             return args;
         }
 

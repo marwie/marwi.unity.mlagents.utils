@@ -1,10 +1,9 @@
 using System.Collections.Generic;
-using System.Dynamic;
 using marwi.mlagents.editor;
 using Newtonsoft.Json;
 using UnityEngine;
 
-namespace Packages.com.marwi.unity.mlagents.utils.Editor.marwi.mlagents.editor
+namespace marwi.mlagents
 {
     [CreateAssetMenu(menuName = Namespace.Base + nameof(Curriculum))]
     public class Curriculum : ScriptableObject
@@ -28,11 +27,11 @@ namespace Packages.com.marwi.unity.mlagents.utils.Editor.marwi.mlagents.editor
             public string Name = "";
             public float[] Values = {0};
         }
-
-
-
-        public override string ToString()
+        
+        public string AsJSON(bool pretty = true)
         {
+            if(type == null)
+                type = new CurriculumType();
             type.measure = Measure == MeasureMode.Progress ? "progress" : "reward";
             type.thresholds = this.Thresholds;
             type.min_lesson_length = MinLessonLength;
@@ -42,8 +41,10 @@ namespace Packages.com.marwi.unity.mlagents.utils.Editor.marwi.mlagents.editor
             foreach (var param in Parameters)
                 type.parameters.Add(param.Name, param.Values);
 
-            return JsonConvert.SerializeObject(type);
+            return JsonConvert.SerializeObject(type, Formatting.Indented);
         }
+
+        public override string ToString() => AsJSON(true);
 
         private CurriculumType type;
 
@@ -63,6 +64,8 @@ namespace Packages.com.marwi.unity.mlagents.utils.Editor.marwi.mlagents.editor
         {
             Debug.Log(this.ToString());
         }
+        
+        
     }
 
     /*

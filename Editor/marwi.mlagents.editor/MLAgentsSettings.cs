@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
+using marwi.mlagents;
 using marwi.mlagents.editor;
 using UnityEditor;
 using UnityEditor.Profiling.Memory.Experimental;
@@ -151,8 +153,11 @@ namespace AgentUtils.Editor
         public string brainNames;
 
         public string runID = "default";
+
         public string anacondaEnvironmentName;
-        public string relPathToCurriculum;
+
+//        public string relPathToCurriculum;
+        public Curriculum curriculum;
 
         [NonSerialized] public readonly List<string> detectedProblems = new List<string>();
 
@@ -168,7 +173,8 @@ namespace AgentUtils.Editor
                 relPathToConfig = relPathToConfig,
                 runID = runID,
                 anacondaEnvironmentName = anacondaEnvironmentName,
-                relPathToCurriculum = relPathToCurriculum,
+//                relPathToCurriculum = relPathToCurriculum,
+                curriculum = curriculum,
             };
         }
 
@@ -196,25 +202,68 @@ namespace AgentUtils.Editor
             }
         }
 
-        public string CurriculumParam
+//        public string CurriculumParam
+//        {
+//            get
+//            {
+//                // this feels hacky but we need to remove the directory name of the agent installation folder
+//                if (!string.IsNullOrWhiteSpace(relPathToCurriculum) && relPathToCurriculum.Length > 1)
+//                    return relPathToCurriculum.Substring(relPathToCurriculum.IndexOf("/", StringComparison.Ordinal) + 1);
+//                return null;
+//            }
+//        }
+
+        public bool TryCreateCurriculumFileAndGetPathParam(out string curriculumParam)
         {
-            get
+            curriculumParam = null;
+            if (!curriculum) return false;
+            var mlAgentsDir = AbsolutePathToMlAgentsDir;
+            if (!Directory.Exists(mlAgentsDir)) return false;
+
+            var json = curriculum.AsJSON();
+            if (string.IsNullOrEmpty(json))
             {
-                // this feels hacky but we need to remove the directory name of the agent installation folder
-                if (!string.IsNullOrWhiteSpace(relPathToCurriculum) && relPathToCurriculum.Length > 1)
-                    return relPathToCurriculum.Substring(relPathToCurriculum.IndexOf("/", StringComparison.Ordinal) + 1);
-                return null;
+                Debug.LogWarning("Problem with curriculum?!\n" + json, curriculum);
+                return false;
             }
+
+            var relativeDir = "config/curricula/" + runID;
+            var absoluteDir = Path.Combine(mlAgentsDir, relativeDir);
+
+            if (!Directory.Exists(absoluteDir))
+                Directory.CreateDirectory(absoluteDir);
+            else
+            {
+                var info = new DirectoryInfo(absoluteDir);
+                foreach (var file in info.EnumerateFiles()) File.Delete(file.FullName);
+            }
+
+            var firstBrain = EnumerateBrainNames().FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(firstBrain))
+            {
+                Debug.LogError("Failed retrieving brain name for curriculum " + curriculum.name + ", configuration: " + name, curriculum);
+                return false;
+            }
+
+            var relativeFilePath = relativeDir + "/" + firstBrain + ".json";
+            var absoluteFilePath = Path.Combine(mlAgentsDir, relativeFilePath);
+            using (var tw = new StreamWriter(absoluteFilePath, false))
+                tw.WriteLine(json);
+//            Debug.Log("Created Curriculum " + absoluteFilePath);
+
+            curriculumParam = relativeDir;
+            return true;
         }
 
         public string AbsolutePathToMlAgentsDir => PathHelper.MakeAbsolute(relPathToMLAgentsDir);
+
         public string AbsolutePathToExecuteable => PathHelper.MakeAbsolute(relPathToExecutable, AbsolutePathToMlAgentsDir);
-        public string AbsolutePathToCurriculumDirectory => PathHelper.MakeAbsolute(relPathToCurriculum, AbsolutePathToMlAgentsDir);
+//        public string AbsolutePathToCurriculumDirectory => PathHelper.MakeAbsolute(relPathToCurriculum, AbsolutePathToMlAgentsDir);
 
         public bool MLAgentsDirExists => Directory.Exists(AbsolutePathToMlAgentsDir);
         public bool ExecuteableExists => File.Exists(AbsolutePathToExecuteable) && AbsolutePathToExecuteable.EndsWith(".exe");
         public bool ConfigExists => File.Exists(PathHelper.MakeAbsolute(relPathToConfig, AbsolutePathToMlAgentsDir));
-        public bool CurriculumExists => Directory.Exists(AbsolutePathToCurriculumDirectory);
+        public bool CurriculumExists => curriculum; // Directory.Exists(AbsolutePathToCurriculumDirectory);
         public bool HasValidRunID => !string.IsNullOrWhiteSpace(runID);
 
         public void AddBrain(string absolutePathToBrain)
@@ -222,43 +271,48 @@ namespace AgentUtils.Editor
             if (string.IsNullOrEmpty(absolutePathToBrain) || !absolutePathToBrain.EndsWith(".asset")) return;
             var assetPath = PathHelper.MakeRelative(absolutePathToBrain, Application.dataPath);
             if (string.IsNullOrEmpty(brainNames) || !brainNames.Contains(assetPath))
-                brainNames = string.IsNullOrWhiteSpace(brainNames) ? assetPath : brainNames + ";" + assetPath;
-//            var brainName
+                brainNames = string.IsNullOrWhiteSpace(brainNames) ? assetPath + ";" : brainNames + assetPath + ";";
         }
 
-//        public void RemoveBrain(string absolutePathToBrain)
-//        {
-//            Debug.Log("TODO, find name from path and remove from list");
-//            Debug.Log(absolutePathToBrain);
-//        }
 
-
-
-        public IEnumerable<(string modelPathAbsolute, string assetPathAbsolute)> EachBrainPaths()
+        public IEnumerable<string> EnumerateBrainNames()
         {
-            if (!string.IsNullOrWhiteSpace(this.brainNames))
-            {
-                var brainPaths = brainNames.Split(';');
-                foreach (var brain in brainPaths)
-                {
-                    if (string.IsNullOrWhiteSpace(brain)) continue;
-                    var absoluteAssetPath = PathHelper.MakeAbsolute(brain, Application.dataPath);
-                    if (!File.Exists(absoluteAssetPath))
-                    {
-                        Debug.LogWarning("Could not find Brain at " + absoluteAssetPath);
-                        continue;
-                    }
+            foreach (var absolutePath in EnumerateAbsoluteBrainPaths())
+                yield return absolutePath.Split('/', '\\').LastOrDefault()?.Replace(".asset", "");
+        }
 
-                    var brainName = brain.Substring(brain.LastIndexOf("/", StringComparison.Ordinal) + 1).Replace(".asset", "");
-                    var pathToBrain = Path.Combine(AbsolutePathToMlAgentsDir, "models", runID + "-0", brainName + ".nn");
-                    if (File.Exists(pathToBrain))
-                        yield return (pathToBrain, absoluteAssetPath.Replace(".asset", ".nn"));
-                    else Debug.LogWarning("Could not find Brain at " + pathToBrain);
-                }
+        public IEnumerable<(string modelPathAbsolute, string assetPathAbsolute)> EnumerateBrainModelPaths()
+        {
+            foreach (var absoluteAssetPath in EnumerateAbsoluteBrainPaths())
+            {
+                var brainName = absoluteAssetPath.Substring(absoluteAssetPath.LastIndexOf("/", StringComparison.Ordinal) + 1).Replace(".asset", "");
+                var pathToBrain = Path.Combine(AbsolutePathToMlAgentsDir, "models", runID + "-0", brainName + ".nn");
+                if (File.Exists(pathToBrain))
+                    yield return (pathToBrain, absoluteAssetPath.Replace(".asset", ".nn"));
+                else Debug.LogWarning("Could not find Brain at " + pathToBrain);
             }
         }
 
-        public IEnumerable<string> InvalidBrainInfos()
+        public IEnumerable<string> EnumerateAbsoluteBrainPaths()
+        {
+            if (string.IsNullOrWhiteSpace(this.brainNames)) yield break;
+
+            var brainPaths = brainNames.Split(';');
+            foreach (var brain in brainPaths)
+            {
+                if (string.IsNullOrWhiteSpace(brain)) continue;
+                var absoluteAssetPath = PathHelper.MakeAbsolute(brain, Application.dataPath);
+                if (!File.Exists(absoluteAssetPath))
+                {
+                    Debug.LogWarning("Could not find Brain at " + absoluteAssetPath);
+                    continue;
+                }
+
+                yield return absoluteAssetPath;
+            }
+        }
+
+        public IEnumerable<string> EnumerateInvalidBrains()
         {
             if (!string.IsNullOrWhiteSpace(this.brainNames))
             {
@@ -276,7 +330,7 @@ namespace AgentUtils.Editor
 
         public bool HasInvalidBrain()
         {
-            return InvalidBrainInfos().Any();
+            return EnumerateInvalidBrains().Any();
         }
 
         public void DetectProblems()
@@ -284,39 +338,58 @@ namespace AgentUtils.Editor
             detectedProblems.Clear();
             if (CurriculumExists)
             {
-                var curriculumDirectory = AbsolutePathToCurriculumDirectory;
-                var curriculumInfo = new DirectoryInfo(curriculumDirectory);
-                var foundBrain = false;
-                foreach (var file in curriculumInfo.EnumerateFiles())
+                if(curriculum.Parameters.Length <= 0)
+                    detectedProblems.Add("Curriculum " + curriculum.name + " contains not reset parameters");
+                else
                 {
-                    if (foundBrain) break;
-                    if (file.Extension == ".json")
+                    for (var i = 0; i < curriculum.Parameters.Length; i++)
                     {
-                        // get curriculum name and check if we have a brain
-                        var name = Path.GetFileNameWithoutExtension(file.FullName);
-                        var paths = AssetDatabase.FindAssets("").Select(AssetDatabase.GUIDToAssetPath);
-
-                        foreach (var p in paths)
+                        var rp = curriculum.Parameters[i];
+                        if (string.IsNullOrEmpty(rp.Name))
+                            detectedProblems.Add($"No Name assigned to ResetParameter at index {i}");
+                        else if (rp.Values == null || rp.Values.Length <= 0)
+                            detectedProblems.Add("Reset Parameter " + rp.Name + " has no values");
+                    }
+                }
+                
+                if (TryCreateCurriculumFileAndGetPathParam(out var relativeDir))
+                {
+                    var foundBrain = false;
+                    var curriculumDirectory = Path.Combine(AbsolutePathToMlAgentsDir, relativeDir + "/");
+                    var curriculumInfo = new DirectoryInfo(curriculumDirectory);
+                    foreach (var file in curriculumInfo.EnumerateFiles())
+                    {
+                        if (foundBrain) break;
+                        if (file.Extension == ".json")
                         {
-                            if (foundBrain) break;
-                            var type = AssetDatabase.GetMainAssetTypeAtPath(p);
-                            // because ML-Agents is not a package we can not reference it in our asmdef SO we have to check by string
-                            // if the asset is a ml agents brain
-                            if (type.Name == "LearningBrain")
+                            // get curriculum name and check if we have a brain
+                            var name = Path.GetFileNameWithoutExtension(file.FullName);
+                            var paths = AssetDatabase.FindAssets("").Select(AssetDatabase.GUIDToAssetPath);
+
+                            foreach (var p in paths)
                             {
-                                var assetName = p.Substring(p.LastIndexOf("/", StringComparison.Ordinal) + 1).Replace(".asset", "");
-                                if (assetName == name)
-                                    foundBrain = true;
+                                if (foundBrain) break;
+                                var type = AssetDatabase.GetMainAssetTypeAtPath(p);
+                                // because ML-Agents is not a package we can not reference it in our asmdef SO we have to check by string
+                                // if the asset is a ml agents brain
+                                if (type.Name == "LearningBrain")
+                                {
+                                    var assetName = p.Substring(p.LastIndexOf("/", StringComparison.Ordinal) + 1).Replace(".asset", "");
+                                    if (assetName == name)
+                                        foundBrain = true;
+                                }
                             }
                         }
                     }
+                    if (!foundBrain)
+                        detectedProblems.Add($"Did not find matching brains or curricula");
                 }
+                else
+                    detectedProblems.Add("Failed to create Curriculum.json: " + curriculum.name);
 
-                if (!foundBrain)
-                    detectedProblems.Add($"Curriculum: No matching brain found for \"{curriculumInfo.Name}\"");
             }
 
-            foreach (var brain in InvalidBrainInfos())
+            foreach (var brain in EnumerateInvalidBrains())
                 detectedProblems.Add("Invalid Brain: " + brain);
 
             if (detectedProblems.Count <= 0)
@@ -347,9 +420,9 @@ namespace AgentUtils.Editor
     internal static class MLAgentsSettingsRegister
     {
         public static string SettingsPath => "Project/Marwi.ML-Agents";
-        
-        public static void OpenSettings() =>  SettingsService.OpenProjectSettings(SettingsPath);
-        
+
+        public static void OpenSettings() => SettingsService.OpenProjectSettings(SettingsPath);
+
         [SettingsProvider]
         public static SettingsProvider CreateMLAgentsSettings()
         {
@@ -446,11 +519,12 @@ namespace AgentUtils.Editor
                         GUIColorHelper.ResetBackgroundColor(bgIdent);
 
 //                        var folder = EditorGUIUtility.FindTexture("Folder Icon");
-                        if (GUILayout.Button("Open", GUILayout.ExpandWidth(false), GUILayout.ExpandHeight(false)))//, GUILayout.Height(20), GUILayout.Width(24)))
+                        if (GUILayout.Button("Open", GUILayout.ExpandWidth(false), GUILayout.ExpandHeight(false))
+                        ) //, GUILayout.Height(20), GUILayout.Width(24)))
                         {
                             Process.Start(config.AbsolutePathToMlAgentsDir);
                         }
-                        
+
                         if (GUILayout.Button("Select", GUILayout.ExpandWidth(false)))
                         {
                             var path = PathHelper.MakeAbsolute(config.relPathToMLAgentsDir);
@@ -464,7 +538,6 @@ namespace AgentUtils.Editor
 
                         EditorGUILayout.EndHorizontal();
 
-                      
 
                         EditorGUILayout.BeginHorizontal();
                         bgIdent = GUIColorHelper.SetBackgroundColor(new Color(1, .8f, .8f), !config.ConfigExists);
@@ -506,9 +579,10 @@ namespace AgentUtils.Editor
 
 
                         EditorGUILayout.LabelField("Optional", EditorStyles.miniBoldLabel);
-                        
+
                         EditorGUILayout.BeginHorizontal();
-                        bgIdent = GUIColorHelper.SetBackgroundColor(new Color(1, .8f, .8f), !string.IsNullOrWhiteSpace(config.relPathToExecutable) && !config.ExecuteableExists);
+                        bgIdent = GUIColorHelper.SetBackgroundColor(new Color(1, .8f, .8f),
+                            !string.IsNullOrWhiteSpace(config.relPathToExecutable) && !config.ExecuteableExists);
                         config.relPathToExecutable =
                             EditorGUILayout.TextField("Executable Rel.", config.relPathToExecutable, new GUIStyle(EditorStyles.textField));
                         GUIColorHelper.ResetBackgroundColor(bgIdent);
@@ -525,26 +599,26 @@ namespace AgentUtils.Editor
 
                         EditorGUI.EndDisabledGroup();
                         EditorGUILayout.EndHorizontal();
-                        
+
                         config.anacondaEnvironmentName = EditorGUILayout.TextField("Anaconda Env.", config.anacondaEnvironmentName);
 
                         EditorGUILayout.BeginHorizontal();
-                        bgIdent = GUIColorHelper.SetBackgroundColor(new Color(1, .8f, .8f),
-                            !config.CurriculumExists && !string.IsNullOrWhiteSpace(config.relPathToCurriculum));
-                        config.relPathToCurriculum = EditorGUILayout.TextField("Curriculum Dir Rel.", config.relPathToCurriculum);
-                        GUIColorHelper.ResetBackgroundColor(bgIdent);
-                        EditorGUI.BeginDisabledGroup(!config.MLAgentsDirExists);
-                        if (GUILayout.Button("Select", GUILayout.ExpandWidth(false)))
-                        {
-                            var path = PathHelper.MakeAbsolute(config.relPathToCurriculum, config.AbsolutePathToMlAgentsDir);
-                            var selectedPath = EditorUtility.OpenFolderPanel("Select Curriculum Directory",
-                                Directory.Exists(path) ? path : config.AbsolutePathToMlAgentsDir,
-                                "");
-                            if (Directory.Exists(selectedPath))
-                                config.relPathToCurriculum = PathHelper.MakeRelative(selectedPath, config.AbsolutePathToMlAgentsDir);
-                        }
-
-                        EditorGUI.EndDisabledGroup();
+//                        bgIdent = GUIColorHelper.SetBackgroundColor(new Color(1, .8f, .8f),
+//                            !config.CurriculumExistsAndIsValid && !string.IsNullOrWhiteSpace(config.relPathToCurriculum));
+//                        config.relPathToCurriculum = EditorGUILayout.TextField("Curriculum Dir Rel.", config.relPathToCurriculum);
+                        config.curriculum = EditorGUILayout.ObjectField("Curriculum", config.curriculum, typeof(Curriculum), false) as Curriculum;
+//                        GUIColorHelper.ResetBackgroundColor(bgIdent);
+//                        EditorGUI.BeginDisabledGroup(!config.MLAgentsDirExists);
+//                        if (GUILayout.Button("Select", GUILayout.ExpandWidth(false)))
+//                        {
+//                            var path = PathHelper.MakeAbsolute(config.relPathToCurriculum, config.AbsolutePathToMlAgentsDir);
+//                            var selectedPath = EditorUtility.OpenFolderPanel("Select Curriculum Directory",
+//                                Directory.Exists(path) ? path : config.AbsolutePathToMlAgentsDir,
+//                                "");
+//                            if (Directory.Exists(selectedPath))
+//                                config.relPathToCurriculum = PathHelper.MakeRelative(selectedPath, config.AbsolutePathToMlAgentsDir);
+//                        }
+//                        EditorGUI.EndDisabledGroup();
                         EditorGUILayout.EndHorizontal();
 
 
