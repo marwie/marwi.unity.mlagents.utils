@@ -1,6 +1,6 @@
 {
   "name": "com.marwi.unity.mlagents.utils",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "displayName": "marwi ML Agents",
   "type": "library",
   "hideInEditor": false,
@@ -11,5 +11,11 @@
       "description": "Import this package and add a Training Marker Component to the scenes you want to build for training to automatically set Acadamy Brains controlled",
       "path": "Samples~/TrainingPreprocessors"
     }
-  ]
+  ],
+  "keywords" : ["ml-agents"],
+  "author": {
+    "name": "Marcel Wiessler",
+    "email": "mail@marcelwiessler.de",
+    "url": "http://www.marcelwiessler.de"
+  }
 }

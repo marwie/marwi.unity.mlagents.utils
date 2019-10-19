@@ -1,3 +1,6 @@
+[0.0.5] - 2019-10-19
+curriculum learning support
+auto update curriculum parameters
 
 [0.0.4] - 2019-10-19
 menu namespace cleanup
