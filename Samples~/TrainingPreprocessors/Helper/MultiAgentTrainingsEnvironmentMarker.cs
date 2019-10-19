@@ -23,6 +23,7 @@ namespace Helper
         [Header("Allowed Components")] public bool Camera = false;
 
         [HideInInspector] [SerializeField] private Transform copyTarget;
+        [HideInInspector] [SerializeField] private GameObject environmentTemplate;
 
         public int Count => CopyCount;
 
@@ -39,7 +40,8 @@ namespace Helper
             DestroyCopies();
 
             // clean environment of any scripts we dont want in our copies
-            var environmentTemplate = Instantiate(Environment.gameObject);
+            environmentTemplate.SafeDestroy();
+            environmentTemplate = Instantiate(Environment.gameObject);
             environmentTemplate.name = Environment.name + "-Template";
             environmentTemplate.CollectComponents(
                 typeof(AutoUpdateObservations),
@@ -97,6 +99,7 @@ namespace Helper
         private void OnEnable()
         {
             HideAndDisablePickingOfCopiedEnvironments();
+            environmentTemplate.SafeDestroy();
         }
 #endif
     }
