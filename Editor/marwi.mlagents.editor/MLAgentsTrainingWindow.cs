@@ -6,9 +6,11 @@ using System.Text;
 using System.Threading;
 using AgentUtils.Editor;
 using UnityEditor;
+using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Debug = UnityEngine.Debug;
 
 namespace marwi.mlagents.editor
 {
@@ -77,9 +79,10 @@ namespace marwi.mlagents.editor
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
             if (GUILayout.Button("Build and Start"))
             {
-                BuildPipeline.BuildPlayer(new[] {SceneManager.GetActiveScene().path}, settings.ActiveConfiguration.AbsolutePathToExecuteable,
+                var report = BuildPipeline.BuildPlayer(new[] {SceneManager.GetActiveScene().path}, settings.ActiveConfiguration.AbsolutePathToExecuteable,
                     BuildTarget.StandaloneWindows, BuildOptions.None);
-                StartTraining();
+                if (report.summary.result == BuildResult.Succeeded)
+                    StartTraining();
             }
 
             EditorGUI.EndDisabledGroup();
@@ -226,8 +229,11 @@ namespace marwi.mlagents.editor
 
             process.StartInfo = info;
             process.Start();
-            settings.lastTrainingProcessID = process.Id;
             this.trainingsProcess = process;
+            settings.lastTrainingProcessID = process.Id;
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+
             RegisterTrainingProcessOutput();
             Log("-----------------------");
             Log("Started Training \n" + info.WorkingDirectory + "\n" + info.Arguments);
