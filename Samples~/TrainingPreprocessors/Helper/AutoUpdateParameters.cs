@@ -19,7 +19,7 @@ namespace Helper
 
         private void OnEnable()
         {
-            // just to show the enabled checkbox
+            UpdateParameters();
         }
 
         [ContextMenu(nameof(UpdateParameters))]

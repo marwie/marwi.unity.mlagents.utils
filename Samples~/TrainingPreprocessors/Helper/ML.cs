@@ -1,7 +1,8 @@
-﻿using MLAgents;
+﻿using System.Collections.Generic;
+using MLAgents;
 using UnityEngine;
 
-namespace MLAgents
+namespace Helper
 {
     public static class ML
     {
@@ -17,6 +18,23 @@ namespace MLAgents
             return _academy;
         }
 
-
+        public static float GetResetParam(string name)
+        {
+            var academy = Academy();
+            if (!academy)
+            {
+                Debug.LogError("No Academy present");
+                return 0;
+            }
+            try
+            {
+                return academy.resetParameters[name];
+            }
+            catch (KeyNotFoundException keyNotFound)
+            {
+                Debug.LogError($"ResetParameter \"{name}\" was not found\n{keyNotFound}", Academy());
+                return 0;
+            }
+        }
     }
 }

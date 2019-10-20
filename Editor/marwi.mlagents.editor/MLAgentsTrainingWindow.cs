@@ -276,10 +276,9 @@ namespace marwi.mlagents.editor
         {
             if (!ProcessIsRunning) return;
 //            trainingsProcess.CloseMainWindow();
-            StopProgramByAttachingToItsConsoleAndIssuingCtrlCEvent(trainingsProcess);
-            trainingsProcess = null;
-            settings.lastTrainingProcessID = -1;
-            Log("Stopped Training");
+            StopProgramByAttachingToItsConsoleAndIssuingCtrlCEvent(trainingsProcess, 1300);
+            if (!ProcessIsRunning)
+                Log("Stopped Training");
         }
 
         private void OnOutput(object sender, DataReceivedEventArgs e)
