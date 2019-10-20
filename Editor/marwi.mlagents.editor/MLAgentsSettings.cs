@@ -37,7 +37,7 @@ namespace AgentUtils.Editor
                     foreach (var guid in settingsInstances)
                     {
                         var path = AssetDatabase.GUIDToAssetPath(guid);
-                        if (path.ToLowerInvariant().StartsWith("Assets", StringComparison.Ordinal))
+                        if (path.ToLowerInvariant().StartsWith("assets", StringComparison.Ordinal))
                         {
                             m_relativeSettingsPath = path;
 //                        Debug.Log($"Resolved ML-Agents Settings at \"{m_relativeSettingsPath}\"");

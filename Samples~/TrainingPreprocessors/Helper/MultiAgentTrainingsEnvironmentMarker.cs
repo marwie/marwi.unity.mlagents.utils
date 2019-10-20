@@ -113,7 +113,7 @@ namespace Helper
         {
             HideAndDisablePickingOfCopiedEnvironments();
             environmentTemplate.SafeDestroy();
-            DestroyCopies();
+//            DestroyCopies();
         }
 #endif
     }

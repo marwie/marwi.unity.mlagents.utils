@@ -39,9 +39,6 @@ namespace Helper
             }
             else
                 instance = this;
-
-            if (InEditor == XRSupport.Enable) PlayerSettings.virtualRealitySupported = true;
-            else if(InEditor == XRSupport.Disable) PlayerSettings.virtualRealitySupported = false;
         }
 
         public int callbackOrder { get; }
@@ -56,6 +53,21 @@ namespace Helper
                 if (!virtualRealityWasEnabled) return;
                 PlayerSettings.virtualRealitySupported = false;
                 Debug.Log("Building without XR Support", this);
+            }
+        }
+
+        [InitializeOnLoadMethod]
+        private static void OnLoad()
+        {
+            EditorApplication.playModeStateChanged += OnPlayModeChange;
+        }
+
+        private static void OnPlayModeChange(PlayModeStateChange obj)
+        {
+            if (obj == PlayModeStateChange.ExitingEditMode)
+            {
+                if (instance.InEditor == XRSupport.Enable) PlayerSettings.virtualRealitySupported = true;
+                else if(instance.InEditor == XRSupport.Disable) PlayerSettings.virtualRealitySupported = false;
             }
         }
 #endif
