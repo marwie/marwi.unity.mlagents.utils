@@ -41,13 +41,14 @@ namespace Helper
         [ContextMenu(nameof(CreateCopies))]
         public void CreateCopies()
         {
-            if (Environment == null) return;
+            if (!Environment) return;
+            if (copyTarget == Environment) return;
             var totalBounds = new Bounds(Vector3.zero, Vector3.zero);
             var environmentRenderer = Environment.GetComponentsInChildren<MeshRenderer>();
             foreach (var rend in environmentRenderer)
                 totalBounds.Encapsulate(rend.bounds);
 
-            if (copyTarget == null) copyTarget = new GameObject(Environment.name + "-Copies").transform;
+            if (!copyTarget) copyTarget = new GameObject(Environment.name + "-Copies").transform;
             DestroyCopies();
 
             // clean environment of any scripts we dont want in our copies
@@ -85,7 +86,7 @@ namespace Helper
         public void DestroyCopies()
         {
             if (copyTarget == Environment) return;
-            if (copyTarget == null) return;
+            if (!copyTarget) return;
             var count = copyTarget.childCount;
             if (count <= 0) return;
             for (var i = copyTarget.childCount - 1; i >= 0; i--)
