@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AgentUtils.Editor;
 using UnityEditor;
+using UnityEditor.Build.Content;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -11,36 +12,15 @@ namespace marwi.mlagents.editor
 {
     public static class TrainingsUtility
     {
-        public static bool LoadTrainingScenesAdditive()
-        {
-            var trainingSceneFound = false;
-            for (var i = 0; i < SceneManager.sceneCount; i++)
-            {
-                var scene = SceneManager.GetSceneAt(i);
-                if (DetermineIsTrainingsScene(i, scene))
-                {
-                    SceneManager.LoadSceneAsync(i, LoadSceneMode.Additive);
-                    trainingSceneFound = true;
-                }
-            }
 
-            return trainingSceneFound;
+        public static bool OpenPlayScenesAdditive()
+        {
+            return ToggleScenes(trainingScenes: false);
         }
 
-        public static bool UnloadTrainingScenes()
+        public static bool OpenTrainingScenesAdditive()
         {
-            var trainingSceneUnloaded = false;
-            for (var i = 0; i < SceneManager.sceneCount; i++)
-            {
-                var scene = SceneManager.GetSceneAt(i);
-                if (DetermineIsTrainingsScene(i, scene))
-                {
-                    EditorSceneManager.CloseScene(scene, false);
-                    trainingSceneUnloaded = true;
-                }
-            }
-
-            return trainingSceneUnloaded;
+            return ToggleScenes(trainingScenes: true);
         }
 
         public static BuildReport MakeTrainingsBuild(MLAgentsSettings settings)
@@ -49,7 +29,7 @@ namespace marwi.mlagents.editor
             for (var i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
-                if (DetermineIsTrainingsScene(i, scene))
+                if (DetermineIsTrainingsScene(scene))
                     scenesToBuild.Add(scene.path);
             }
 
@@ -62,33 +42,60 @@ namespace marwi.mlagents.editor
         }
 
 
-        private static readonly List<GameObject> roots = new List<GameObject>();
-
-        private static bool DetermineIsTrainingsScene(int index, Scene scene, bool loadAdditiveIsNecessary = false)
+        private static bool ToggleScenes(bool trainingScenes)
         {
-            if (scene.IsValid())
+            var scenesWeWant = new List<int>();
+            
+            for (var i = 0; i < SceneManager.sceneCount; i++)
             {
-                var wasLoaded = scene.isLoaded;
-                if (!scene.isLoaded && loadAdditiveIsNecessary)
+                var scene = SceneManager.GetSceneAt(i);
+                if (!scene.IsValid()) continue;
+                if (DetermineIsTrainingsScene(scene, true) == trainingScenes)
                 {
-                    SceneManager.LoadScene(index, LoadSceneMode.Additive);
-                }
-                
-                if (scene.isLoaded)
-                {
-                    roots.Clear();
-                    scene.GetRootGameObjects(roots);
-                    return roots.Any(root => root.GetComponentInChildren<TrainingSceneMarker>());
-                }
-
-                if (!wasLoaded && loadAdditiveIsNecessary)
-                {
-                    EditorSceneManager.CloseScene(scene, false);
+                    scenesWeWant.Add(i);
+                    EditorSceneManager.OpenScene(string.IsNullOrEmpty(scene.path) ? "" : scene.path, OpenSceneMode.Additive);
                 }
             }
 
+            if (!trainingScenes && scenesWeWant.Count <= 0)
+            {
+                Debug.LogWarning("No Play Scene found");
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            }
+
+            for (var i = 0; i < SceneManager.sceneCount; i++)
+            {
+                if (scenesWeWant.Contains(i)) continue;
+                var scene = SceneManager.GetSceneAt(i);
+                if (!scene.IsValid()) continue;
+                EditorSceneManager.CloseScene(scene, false);
+            }
             
-            return false;
+            return scenesWeWant.Count > 0;
+        }
+
+        private static readonly List<GameObject> roots = new List<GameObject>();
+
+        private static bool DetermineIsTrainingsScene(Scene scene, bool loadAdditiveIfNecessary = false)
+        {
+            if (!scene.IsValid()) return false;
+            
+            var result = false;
+            var wasLoaded = scene.isLoaded;
+            if (!scene.isLoaded && loadAdditiveIfNecessary && !string.IsNullOrEmpty(scene.path)) EditorSceneManager.OpenScene(scene.path, OpenSceneMode.Additive);
+
+            if (scene.isLoaded)
+            {
+                roots.Clear();
+                scene.GetRootGameObjects(roots);
+                result = roots.Any(root => root.GetComponentInChildren<TrainingSceneMarker>());
+//                    Debug.Log("is training scene " + scene.path + ": " + result);
+            }
+
+            if (!wasLoaded && loadAdditiveIfNecessary) EditorSceneManager.CloseScene(scene, false);
+
+
+            return result;
         }
     }
 }

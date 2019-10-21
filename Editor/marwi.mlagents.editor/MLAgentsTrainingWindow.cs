@@ -80,8 +80,10 @@ namespace marwi.mlagents.editor
             EditorGUI.BeginDisabledGroup(!settings.HasActiveConfiguration || !settings.ActiveConfiguration.CanTrain);
 
 
-            if (GUILayout.Button("Enter PlayScene")) TrainingsUtility.UnloadTrainingScenes();
-            if (GUILayout.Button("Enter Training")) TrainingsUtility.UnloadTrainingScenes();
+            if (GUILayout.Button("Load Play Scene")) TrainingsUtility.OpenPlayScenesAdditive();
+            if (GUILayout.Button("Load Training Scene")) TrainingsUtility.OpenTrainingScenesAdditive();
+
+            GUILayout.Space(10);
 
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
@@ -119,18 +121,19 @@ namespace marwi.mlagents.editor
                     StopTrainingProcess();
                 }
 
-                foreach (var brains in settings.ActiveConfiguration.EnumerateBrainModelPaths())
+                if (settings.ActiveConfiguration != null)
                 {
-                    var source = brains.modelPathAbsolute;
-                    var target = brains.assetPathAbsolute;
-                    Log("Copy Brain from \"" + source + "\" to \"" + target + "\"");
-                    File.Copy(source, target, true);
+                    foreach (var (source, target) in settings.ActiveConfiguration.EnumerateBrainModelPaths())
+                    {
+                        Log("Copy Brain from \"" + source + "\" to \"" + target + "\"");
+                        File.Copy(source, target, true);
+                    }
                 }
-
-                AssetDatabase.Refresh();
 
                 if (exitAndContinue && !ProcessIsRunning)
                     ContinueTraining();
+
+                AssetDatabase.Refresh();
             }
 
             EditorGUI.EndDisabledGroup();

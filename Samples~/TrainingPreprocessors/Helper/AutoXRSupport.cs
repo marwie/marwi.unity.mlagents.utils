@@ -1,4 +1,5 @@
 ﻿
+using System;
 using marwi.mlagents;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ using UnityEditor.Build.Reporting;
 namespace Helper
 {
     [ExecuteInEditMode]
-    public class AutoXRSettings : MonoBehaviour
+    public class AutoXRSupport : MonoBehaviour
 #if UNITY_EDITOR
         , IPreprocessBuildWithReport
 #endif
@@ -28,13 +29,13 @@ namespace Helper
 
         
 #if UNITY_EDITOR
-        private static AutoXRSettings instance;
+        private static AutoXRSupport instance;
 
         private void OnEnable()
         {
             if (instance && instance != this)
             {
-                Debug.Log("Only one Component allowed: " + nameof(AutoXRSettings), instance);
+                Debug.Log("Only one Component allowed: " + nameof(AutoXRSupport), instance);
                 this.SafeDestroy();
             }
             else
@@ -45,9 +46,11 @@ namespace Helper
 
         public void OnPreprocessBuild(BuildReport report)
         {
-            if (OnBuild == XRSupport.DoNothing) return;
+            if (!instance) return;
+            
+            if (instance.OnBuild == XRSupport.DoNothing) return;
 
-            if (OnBuild == XRSupport.Disable)
+            if (instance.OnBuild == XRSupport.Disable)
             {
                 var virtualRealityWasEnabled = PlayerSettings.virtualRealitySupported;
                 if (!virtualRealityWasEnabled) return;
@@ -64,6 +67,8 @@ namespace Helper
 
         private static void OnPlayModeChange(PlayModeStateChange obj)
         {
+            if (!instance) return;
+            
             if (obj == PlayModeStateChange.ExitingEditMode)
             {
                 if (instance.InEditor == XRSupport.Enable) PlayerSettings.virtualRealitySupported = true;
