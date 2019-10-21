@@ -79,12 +79,15 @@ namespace marwi.mlagents.editor
             // ReSharper disable once PossibleNullReferenceException
             EditorGUI.BeginDisabledGroup(!settings.HasActiveConfiguration || !settings.ActiveConfiguration.CanTrain);
 
+
+            if (GUILayout.Button("Enter PlayScene")) TrainingsUtility.UnloadTrainingScenes();
+            if (GUILayout.Button("Enter Training")) TrainingsUtility.UnloadTrainingScenes();
+
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
             if (GUILayout.Button("Build and Start"))
             {
-                var report = BuildPipeline.BuildPlayer(new[] {SceneManager.GetActiveScene().path}, settings.ActiveConfiguration.AbsolutePathToExecuteable,
-                    BuildTarget.StandaloneWindows, BuildOptions.None);
+                var report = TrainingsUtility.MakeTrainingsBuild(settings);
                 if (report.summary.result == BuildResult.Succeeded)
                     StartTraining();
             }
