@@ -29,8 +29,11 @@ namespace marwi.mlagents.editor
             for (var i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
-                if (DetermineIsTrainingsScene(scene))
+                if (DetermineIsTrainingsScene(scene, true))
+                {
+                    Debug.Log($"Adding {scene.path} to TrainingsBuild");
                     scenesToBuild.Add(scene.path);
+                }
             }
 
             return BuildPipeline.BuildPlayer(
@@ -45,6 +48,7 @@ namespace marwi.mlagents.editor
         private static bool ToggleScenes(bool trainingScenes)
         {
             var scenesWeWant = new List<int>();
+            
             
             for (var i = 0; i < SceneManager.sceneCount; i++)
             {

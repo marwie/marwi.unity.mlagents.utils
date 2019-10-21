@@ -7,6 +7,8 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEngine.SceneManagement;
+
 #endif
 
 namespace Helper
@@ -25,7 +27,7 @@ namespace Helper
         }
 
         public XRSupport OnBuild = XRSupport.Disable;
-        public XRSupport InEditor = XRSupport.DoNothing;
+        public XRSupport OnPlay = XRSupport.DoNothing;
 
         
 #if UNITY_EDITOR
@@ -35,11 +37,10 @@ namespace Helper
         {
             if (instance && instance != this)
             {
-                Debug.Log("Only one Component allowed: " + nameof(AutoXRSupport), instance);
-                this.SafeDestroy();
+                Debug.Log("Overwrite previously assigned: " + nameof(AutoXRSupport), instance);
+//                this.SafeDestroy();
             }
-            else
-                instance = this;
+            instance = this;
         }
 
         public int callbackOrder { get; }
@@ -71,8 +72,8 @@ namespace Helper
             
             if (obj == PlayModeStateChange.ExitingEditMode)
             {
-                if (instance.InEditor == XRSupport.Enable) PlayerSettings.virtualRealitySupported = true;
-                else if(instance.InEditor == XRSupport.Disable) PlayerSettings.virtualRealitySupported = false;
+                if (instance.OnPlay == XRSupport.Enable) PlayerSettings.virtualRealitySupported = true;
+                else if(instance.OnPlay == XRSupport.Disable) PlayerSettings.virtualRealitySupported = false;
             }
         }
 #endif
