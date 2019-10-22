@@ -31,27 +31,18 @@ namespace Helper
 
         
 #if UNITY_EDITOR
-        private static AutoXRSupport instance;
-
-        private void OnEnable()
-        {
-            if (instance && instance != this)
-            {
-                Debug.Log("Overwrite previously assigned: " + nameof(AutoXRSupport), instance);
-//                this.SafeDestroy();
-            }
-            instance = this;
-        }
-
-        public int callbackOrder { get; }
+        
+        public int callbackOrder => 500;
 
         public void OnPreprocessBuild(BuildReport report)
         {
-            if (!instance) return;
+            var autoXR = FindObjectOfType<AutoXRSupport>();
             
-            if (instance.OnBuild == XRSupport.DoNothing) return;
+            if (!autoXR) return;
+            
+            if (autoXR.OnBuild == XRSupport.DoNothing) return;
 
-            if (instance.OnBuild == XRSupport.Disable)
+            if (autoXR.OnBuild == XRSupport.Disable)
             {
                 var virtualRealityWasEnabled = PlayerSettings.virtualRealitySupported;
                 if (!virtualRealityWasEnabled) return;
@@ -68,12 +59,22 @@ namespace Helper
 
         private static void OnPlayModeChange(PlayModeStateChange obj)
         {
-            if (!instance) return;
+            var autoXR = FindObjectOfType<AutoXRSupport>();
+            
+            if (!autoXR) return;
             
             if (obj == PlayModeStateChange.ExitingEditMode)
             {
-                if (instance.OnPlay == XRSupport.Enable) PlayerSettings.virtualRealitySupported = true;
-                else if(instance.OnPlay == XRSupport.Disable) PlayerSettings.virtualRealitySupported = false;
+                if (autoXR.OnPlay == XRSupport.Enable)
+                {
+                    Debug.Log("Enable ´Virtual Reality Support", autoXR);
+                    PlayerSettings.virtualRealitySupported = true;
+                }
+                else if (autoXR.OnPlay == XRSupport.Disable)
+                {
+                    Debug.Log("Disable Virtual Reality Support", autoXR);
+                    PlayerSettings.virtualRealitySupported = false;
+                }
             }
         }
 #endif
