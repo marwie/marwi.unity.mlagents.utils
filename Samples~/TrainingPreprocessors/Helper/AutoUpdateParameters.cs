@@ -16,7 +16,8 @@ namespace Helper
         {
             if (!Academy)
                 Academy = FindObjectOfType<Academy>();
-            UpdateParameters();
+            if (enabled)
+                UpdateParameters();
         }
 
         private void OnEnable()
