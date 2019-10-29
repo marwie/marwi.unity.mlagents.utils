@@ -1,3 +1,11 @@
+
+[0.0.6] - 2019-10-29
+- ml global access helper
+- autoxrsetting component
+- training-play scene switch buttons for trainings window
+- AutoUpdateParams only if enabled
+- Config change event to regnerate config dropdown in trainingswindow
+
 [0.0.5] - 2019-10-19
 curriculum learning support
 auto update curriculum parameters
