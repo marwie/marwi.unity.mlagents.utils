@@ -34,7 +34,13 @@ namespace marwi.mlagents.editor
         private void OnEnable()
         {
             settings = MLAgentsSettings.GetOrCreateSettings();
+            settings.Changed += OnSettingsChanged;
             TryRegainPrevTrainingProcess();
+        }
+
+        private void OnSettingsChanged()
+        {
+            configurationOptions = null;
         }
 
         private StringBuilder messageBuffer = new StringBuilder();
@@ -57,7 +63,7 @@ namespace marwi.mlagents.editor
             if (GUILayout.Button("Open Settings")) MLAgentsSettingsRegister.OpenSettings();
             EditorGUILayout.EndHorizontal();
 
-            if (settings.Configurations.Count + 1 != configurationOptions.Length)
+            if (configurationOptions == null || settings.Configurations.Count + 1 != configurationOptions.Length)
             {
                 configurationOptions = new string[settings.Configurations.Count + 1];
                 configurationOptions[0] = "None";
@@ -79,12 +85,17 @@ namespace marwi.mlagents.editor
             // ReSharper disable once PossibleNullReferenceException
             EditorGUI.BeginDisabledGroup(!settings.HasActiveConfiguration || !settings.ActiveConfiguration.CanTrain);
 
+
+            if (GUILayout.Button("Load Play Scene")) TrainingsUtility.OpenPlayScenesAdditive();
+            if (GUILayout.Button("Load Training Scene")) TrainingsUtility.OpenTrainingScenesAdditive();
+
+            GUILayout.Space(10);
+
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
             if (GUILayout.Button("Build and Start"))
             {
-                var report = BuildPipeline.BuildPlayer(new[] {SceneManager.GetActiveScene().path}, settings.ActiveConfiguration.AbsolutePathToExecuteable,
-                    BuildTarget.StandaloneWindows, BuildOptions.None);
+                var report = TrainingsUtility.MakeTrainingsBuild(settings);
                 if (report.summary.result == BuildResult.Succeeded)
                     StartTraining();
             }
@@ -116,18 +127,19 @@ namespace marwi.mlagents.editor
                     StopTrainingProcess();
                 }
 
-                foreach (var brains in settings.ActiveConfiguration.EnumerateBrainModelPaths())
+                if (settings.ActiveConfiguration != null)
                 {
-                    var source = brains.modelPathAbsolute;
-                    var target = brains.assetPathAbsolute;
-                    Log("Copy Brain from \"" + source + "\" to \"" + target + "\"");
-                    File.Copy(source, target, true);
+                    foreach (var (source, target) in settings.ActiveConfiguration.EnumerateBrainModelPaths())
+                    {
+                        Log("Copy Brain from \"" + source + "\" to \"" + target + "\"");
+                        File.Copy(source, target, true);
+                    }
                 }
-
-                AssetDatabase.Refresh();
 
                 if (exitAndContinue && !ProcessIsRunning)
                     ContinueTraining();
+
+                AssetDatabase.Refresh();
             }
 
             EditorGUI.EndDisabledGroup();
@@ -276,10 +288,9 @@ namespace marwi.mlagents.editor
         {
             if (!ProcessIsRunning) return;
 //            trainingsProcess.CloseMainWindow();
-            StopProgramByAttachingToItsConsoleAndIssuingCtrlCEvent(trainingsProcess);
-            trainingsProcess = null;
-            settings.lastTrainingProcessID = -1;
-            Log("Stopped Training");
+            StopProgramByAttachingToItsConsoleAndIssuingCtrlCEvent(trainingsProcess, 1300);
+            if (!ProcessIsRunning)
+                Log("Stopped Training");
         }
 
         private void OnOutput(object sender, DataReceivedEventArgs e)

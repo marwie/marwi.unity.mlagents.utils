@@ -41,6 +41,7 @@ namespace marwi.mlagents.utils
             for (var i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
+                if (!scene.isLoaded || !scene.IsValid()) continue;
                 TrainingSceneMarker marker = null;
                 Academy academy = null;
                 foreach (var root in scene.GetRootGameObjects())

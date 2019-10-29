@@ -37,7 +37,7 @@ namespace AgentUtils.Editor
                     foreach (var guid in settingsInstances)
                     {
                         var path = AssetDatabase.GUIDToAssetPath(guid);
-                        if (path.ToLowerInvariant().StartsWith("Assets", StringComparison.Ordinal))
+                        if (path.ToLowerInvariant().StartsWith("assets", StringComparison.Ordinal))
                         {
                             m_relativeSettingsPath = path;
 //                        Debug.Log($"Resolved ML-Agents Settings at \"{m_relativeSettingsPath}\"");
@@ -142,6 +142,12 @@ namespace AgentUtils.Editor
         public void SetActiveExclusive(int index)
         {
             for (var i = 0; i < Configurations.Count; i++) Configurations[i].isActive = i == index;
+        }
+
+        public event Action Changed;
+        public void NotifyChanged()
+        {
+            Changed?.Invoke();
         }
     }
 
@@ -665,6 +671,7 @@ namespace AgentUtils.Editor
                 if (EditorGUI.EndChangeCheck())
                 {
                     EditorUtility.SetDirty(settings);
+                    settings.NotifyChanged();
                 }
 
                 GUILayout.Space(10);
