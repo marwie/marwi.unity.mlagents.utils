@@ -13,8 +13,10 @@ namespace marwi.mlagents
             Never
         }
 
+        [Header("Gizmo Options")]
         public GizmoMode Mode = GizmoMode.Selected;
         public Color Tint = new Color(.5f, .5f, .5f, .2f);
+        public bool DrawPlane = true;
         [Range(-.5f, .5f)] public float Plane = 0;
         
 
@@ -37,9 +39,12 @@ namespace marwi.mlagents
             col.a = .7f;
             Gizmos.color = col;
             Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
-            var col2 = Tint;
-            Gizmos.color = col2;
-            Gizmos.DrawCube(new Vector3(0, Plane, 0), new Vector3(1, 0.000001f, 1f));
+            if (DrawPlane)
+            {
+                var col2 = Tint;
+                Gizmos.color = col2;
+                Gizmos.DrawCube(new Vector3(0, Plane, 0), new Vector3(1, 0.000001f, 1f));
+            }
         }
 
         public Bounds Bounds => new Bounds(transform.position, transform.lossyScale);
