@@ -16,6 +16,7 @@ namespace marwi.mlagents
         public GizmoMode Mode = GizmoMode.Selected;
         public Color Tint = new Color(.5f, .5f, .5f, .2f);
         [Range(-.5f, .5f)] public float Plane = 0;
+        
 
         private void OnDrawGizmos()
         {
@@ -41,6 +42,8 @@ namespace marwi.mlagents
             Gizmos.DrawCube(new Vector3(0, Plane, 0), new Vector3(1, 0.000001f, 1f));
         }
 
+        public Bounds Bounds => new Bounds(transform.position, transform.lossyScale);
+        
         public Vector3 GetRandomPosition()
         {
             var rpl = new Vector4(Mathf.Lerp(-.5f, .5f, Random.value), Mathf.Lerp(-.5f, .5f, Random.value), Mathf.Lerp(-.5f, .5f, Random.value), 1);

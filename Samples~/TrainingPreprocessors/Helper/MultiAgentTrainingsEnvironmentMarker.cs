@@ -46,9 +46,13 @@ namespace Helper
             var environmentRenderer = Environment.GetComponentsInChildren<MeshRenderer>();
             foreach (var rend in environmentRenderer)
                 totalBounds.Encapsulate(rend.bounds);
+            var agentBounds = Environment.GetComponentsInChildren<AgentEnvironmentBounds>();
+            foreach (var ab in agentBounds)
+                totalBounds.Encapsulate(ab.Bounds);
 
-            if (!copyTarget) copyTarget = new GameObject(Environment.name + "-Copies").transform;
             DestroyCopies();
+            
+            if (!copyTarget) copyTarget = new GameObject(Environment.name + "-Copies").transform;
 
             // clean environment of any scripts we dont want in our copies
             environmentTemplate.SafeDestroy();
