@@ -75,7 +75,7 @@ namespace Helper
                     break;
                 }
 
-                instance.transform.position = Environment.transform.position + new Vector3(totalBounds.size.x * 1.1f * (i + 1), 0, 0);
+                instance.transform.position = Environment.transform.position + new Vector3(totalBounds.size.x * (i + 1), 0, 0);
             }
 
             // cleanup
