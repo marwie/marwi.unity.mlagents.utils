@@ -16,10 +16,8 @@ namespace marwi.mlagents.editor
 {
     public class MLAgentsTrainingWindow : EditorWindow
     {
-        private MLAgentsSettings settings;
-
-        private Process trainingsProcess;
-
+        public static bool IsOpen => GetWindow<MLAgentsTrainingWindow>() != null;
+        
         [MenuItem(Namespace.Base + "/Open Training Window")]
         public static MLAgentsTrainingWindow OpenWindow()
         {
@@ -29,7 +27,10 @@ namespace marwi.mlagents.editor
             return window;
         }
 
-        public static bool IsOpen => GetWindow<MLAgentsTrainingWindow>() != null;
+        
+        private MLAgentsSettings settings;
+        private Process trainingsProcess;
+        private string[] configurationOptions = new string[0];
 
         private void OnEnable()
         {
@@ -43,18 +44,15 @@ namespace marwi.mlagents.editor
             configurationOptions = null;
         }
 
-        private StringBuilder messageBuffer = new StringBuilder();
-        private Vector2 scroll;
-        private string[] configurationOptions = new string[0];
 
         private void Log(string msg)
         {
-            messageBuffer.Insert(0, $"{msg}\n");
+            Debug.Log(msg);
         }
 
         private void LogWarning(string msg)
         {
-            messageBuffer.Insert(0, $"<color=#555500>{msg}</color>\n");
+            Debug.LogWarning(msg);
         }
 
         private void OnGUI()
@@ -93,7 +91,6 @@ namespace marwi.mlagents.editor
             }
 
 
-            EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
             if (GUILayout.Button("Build and Start"))
             {
@@ -103,23 +100,20 @@ namespace marwi.mlagents.editor
             }
 
             EditorGUI.EndDisabledGroup();
-            EditorGUILayout.EndHorizontal();
 
-            EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(ProcessIsRunning);
-            if (GUILayout.Button("Start")) StartTraining();
+            if (GUILayout.Button("Start New")) StartTraining();
             if (GUILayout.Button("Continue")) ContinueTraining();
             EditorGUI.EndDisabledGroup();
 
-            EditorGUI.BeginDisabledGroup(!ProcessIsRunning);
-            if (GUILayout.Button("Stop")) StopTrainingProcess();
-            EditorGUI.EndDisabledGroup();
-            EditorGUILayout.EndHorizontal();
 
 //            EditorGUI.BeginDisabledGroup(ProcessIsRunning);
 //            if (GUILayout.Button("Train in Editor")) StartTraining(true);
 //            EditorGUI.EndDisabledGroup();
 
+            EditorGUI.BeginDisabledGroup(!ProcessIsRunning);
+            if (GUILayout.Button("Stop")) StopTrainingProcess();
+            EditorGUI.EndDisabledGroup();
 
             if (GUILayout.Button("Copy Current Brain"))
             {
@@ -146,31 +140,24 @@ namespace marwi.mlagents.editor
 
             EditorGUI.EndDisabledGroup();
 
-//
-
-            if (GUILayout.Button("Clear Log"))
-            {
-                messageBuffer.Clear();
-            }
-
             EditorGUILayout.Space();
             if (settings.lastTrainingProcessID != -1)
             {
                 GUILayout.Space(5);
-                EditorGUILayout.HelpBox("Current Training Process ID: " + settings.lastTrainingProcessID, MessageType.Info);
+                EditorGUILayout.HelpBox("Training Process ID: " + settings.lastTrainingProcessID, MessageType.Info);
                 GUILayout.Space(10);
             }
 
             EditorGUILayout.Space();
 
 
-            scroll = EditorGUILayout.BeginScrollView(scroll);
-            var style = EditorStyles.label;
-            style.wordWrap = true;
-            style.richText = true;
-            style.alignment = TextAnchor.UpperLeft;
-            EditorGUILayout.LabelField(messageBuffer.ToString(), style);
-            EditorGUILayout.EndScrollView();
+//            scroll = EditorGUILayout.BeginScrollView(scroll);
+//            var style = EditorStyles.label;
+//            style.wordWrap = true;
+//            style.richText = true;
+//            style.alignment = TextAnchor.UpperLeft;
+//            EditorGUILayout.LabelField(messageBuffer.ToString(), style);
+//            EditorGUILayout.EndScrollView();
 
             EditorGUI.EndDisabledGroup();
         }

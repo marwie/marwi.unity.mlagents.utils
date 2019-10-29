@@ -31,6 +31,23 @@ namespace marwi.mlagents
             vec -= Vector3.one * 180;
             return vec;
         }
+
+        public static float ThresholdAction(this float action, float threshold)
+        {
+            if (action > threshold)
+                action = 1;
+            else if (action < -threshold)
+                action = -1;
+            return action;
+        }
+
+        public static Vector2 ThresholdAction(this Vector2 action, float threshold)
+        {
+            action.x = ThresholdAction(action.x, threshold);
+            action.y = ThresholdAction(action.y, threshold);
+            return action;
+        }
+        
         
         
         
