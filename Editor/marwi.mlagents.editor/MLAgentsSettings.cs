@@ -143,6 +143,12 @@ namespace AgentUtils.Editor
         {
             for (var i = 0; i < Configurations.Count; i++) Configurations[i].isActive = i == index;
         }
+
+        public event Action Changed;
+        public void NotifyChanged()
+        {
+            Changed?.Invoke();
+        }
     }
 
     [System.Serializable]
@@ -665,6 +671,7 @@ namespace AgentUtils.Editor
                 if (EditorGUI.EndChangeCheck())
                 {
                     EditorUtility.SetDirty(settings);
+                    settings.NotifyChanged();
                 }
 
                 GUILayout.Space(10);

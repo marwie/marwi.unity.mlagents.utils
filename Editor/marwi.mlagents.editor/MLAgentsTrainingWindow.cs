@@ -34,7 +34,13 @@ namespace marwi.mlagents.editor
         private void OnEnable()
         {
             settings = MLAgentsSettings.GetOrCreateSettings();
+            settings.Changed += OnSettingsChanged;
             TryRegainPrevTrainingProcess();
+        }
+
+        private void OnSettingsChanged()
+        {
+            configurationOptions = null;
         }
 
         private StringBuilder messageBuffer = new StringBuilder();
@@ -57,7 +63,7 @@ namespace marwi.mlagents.editor
             if (GUILayout.Button("Open Settings")) MLAgentsSettingsRegister.OpenSettings();
             EditorGUILayout.EndHorizontal();
 
-            if (settings.Configurations.Count + 1 != configurationOptions.Length)
+            if (configurationOptions == null || settings.Configurations.Count + 1 != configurationOptions.Length)
             {
                 configurationOptions = new string[settings.Configurations.Count + 1];
                 configurationOptions[0] = "None";
