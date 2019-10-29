@@ -12,7 +12,6 @@ namespace marwi.mlagents.editor
 {
     public static class TrainingsUtility
     {
-
         public static bool OpenPlayScenesAdditive()
         {
             return ToggleScenes(trainingScenes: false);
@@ -48,8 +47,8 @@ namespace marwi.mlagents.editor
         private static bool ToggleScenes(bool trainingScenes)
         {
             var scenesWeWant = new List<int>();
-            
-            
+
+
             for (var i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
@@ -72,9 +71,10 @@ namespace marwi.mlagents.editor
                 if (scenesWeWant.Contains(i)) continue;
                 var scene = SceneManager.GetSceneAt(i);
                 if (!scene.IsValid()) continue;
-                EditorSceneManager.CloseScene(scene, false);
+                if (SceneManager.sceneCount > 1)
+                    EditorSceneManager.CloseScene(scene, false);
             }
-            
+
             return scenesWeWant.Count > 0;
         }
 
@@ -83,10 +83,11 @@ namespace marwi.mlagents.editor
         private static bool DetermineIsTrainingsScene(Scene scene, bool loadAdditiveIfNecessary = false)
         {
             if (!scene.IsValid()) return false;
-            
+
             var result = false;
             var wasLoaded = scene.isLoaded;
-            if (!scene.isLoaded && loadAdditiveIfNecessary && !string.IsNullOrEmpty(scene.path)) EditorSceneManager.OpenScene(scene.path, OpenSceneMode.Additive);
+            if (!scene.isLoaded && loadAdditiveIfNecessary && !string.IsNullOrEmpty(scene.path))
+                EditorSceneManager.OpenScene(scene.path, OpenSceneMode.Additive);
 
             if (scene.isLoaded)
             {

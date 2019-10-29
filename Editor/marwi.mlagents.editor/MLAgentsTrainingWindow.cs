@@ -85,9 +85,10 @@ namespace marwi.mlagents.editor
             // ReSharper disable once PossibleNullReferenceException
             EditorGUI.BeginDisabledGroup(!settings.HasActiveConfiguration || !settings.ActiveConfiguration.CanTrain);
 
-
+            EditorGUI.BeginDisabledGroup(SceneManager.sceneCount <= 1);
             if (GUILayout.Button("Load Play Scene")) TrainingsUtility.OpenPlayScenesAdditive();
             if (GUILayout.Button("Load Training Scene")) TrainingsUtility.OpenTrainingScenesAdditive();
+            EditorGUI.EndDisabledGroup();
 
             GUILayout.Space(10);
 

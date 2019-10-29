@@ -18,7 +18,7 @@ namespace marwi.mlagents
         public static Vector3 Modulo(this Vector3 vec, Vector3 mod) => new Vector3(vec.x % mod.x, vec.y % mod.y, vec.z % mod.z);
         public static Vector3 Modulo(this Vector3 vec, float mod) => new Vector3(vec.x % mod, vec.y % mod, vec.z % mod);
 
-        public static Vector3 CenterEulerAngleDifference(Vector3 vec)
+        public static Vector3 CenterEulerAngleDifference(this Vector3 vec)
         {
             vec += Vector3.one * 180;
             vec = vec.Modulo(360);
