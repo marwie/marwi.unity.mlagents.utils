@@ -10,6 +10,7 @@ using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using Debug = UnityEngine.Debug;
 
 namespace marwi.mlagents.editor
@@ -31,6 +32,7 @@ namespace marwi.mlagents.editor
         private MLAgentsSettings settings;
         private Process trainingsProcess;
         private string[] configurationOptions = new string[0];
+        private bool startTrainingInEditor = false;
 
         private void OnEnable()
         {
@@ -61,6 +63,10 @@ namespace marwi.mlagents.editor
             if (GUILayout.Button("Open Settings")) MLAgentsSettingsRegister.OpenSettings();
             EditorGUILayout.EndHorizontal();
 
+
+            GUILayout.Space(6);
+            EditorGUILayout.LabelField("Training", EditorStyles.boldLabel);
+            
             if (configurationOptions == null || settings.Configurations.Count + 1 != configurationOptions.Length)
             {
                 configurationOptions = new string[settings.Configurations.Count + 1];
@@ -77,8 +83,6 @@ namespace marwi.mlagents.editor
                 settings.SetActiveExclusive(selection - 1);
                 EditorUtility.SetDirty(settings);
             }
-
-            GUILayout.Space(6);
 
             // ReSharper disable once PossibleNullReferenceException
             EditorGUI.BeginDisabledGroup(!settings.HasActiveConfiguration || !settings.ActiveConfiguration.CanTrain);
@@ -99,9 +103,6 @@ namespace marwi.mlagents.editor
                     StartTraining();
             }
 
-            EditorGUI.EndDisabledGroup();
-
-            EditorGUI.BeginDisabledGroup(ProcessIsRunning);
             if (GUILayout.Button("Start New")) StartTraining();
             if (GUILayout.Button("Continue")) ContinueTraining();
             EditorGUI.EndDisabledGroup();
@@ -141,14 +142,22 @@ namespace marwi.mlagents.editor
             EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.Space();
+
+            
+            EditorGUILayout.LabelField("Debug", EditorStyles.boldLabel);
+            // TODO: make work with TrainingScene and Automatically toggling the Control in Academy
+            startTrainingInEditor = EditorGUILayout.ToggleLeft("Start Training in Editor", startTrainingInEditor);
+
+            EditorGUILayout.BeginVertical();
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndVertical();
+            
             if (settings.lastTrainingProcessID != -1)
             {
                 GUILayout.Space(5);
                 EditorGUILayout.HelpBox("Training Process ID: " + settings.lastTrainingProcessID, MessageType.Info);
                 GUILayout.Space(10);
             }
-
-            EditorGUILayout.Space();
 
 
 //            scroll = EditorGUILayout.BeginScrollView(scroll);
@@ -179,7 +188,7 @@ namespace marwi.mlagents.editor
             if (!string.IsNullOrWhiteSpace(settings.ActiveConfiguration.anacondaEnvironmentName))
                 args = $"activate {settings.ActiveConfiguration.anacondaEnvironmentName} && {args}";
 
-            if (!inEditor && settings.ActiveConfiguration.ExecuteableExists)
+            if (!inEditor && !startTrainingInEditor && settings.ActiveConfiguration.ExecuteableExists)
                 args = $"{args} --env={settings.ActiveConfiguration.ExecuteableParam}";
 
             if (!string.IsNullOrWhiteSpace(settings.ActiveConfiguration.runID))
