@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Security;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
@@ -34,10 +33,11 @@ namespace marwi.mlagents
 
         public static float ThresholdAction(this float action, float threshold)
         {
-            if (action > threshold)
+            if (action >= threshold)
                 action = 1;
-            else if (action < -threshold)
+            else if (action <= -threshold)
                 action = -1;
+            else action = 0;
             return action;
         }
 
@@ -47,10 +47,24 @@ namespace marwi.mlagents
             action.y = ThresholdAction(action.y, threshold);
             return action;
         }
-        
-        
-        
-        
+
+        public static float StepAction(this float action, uint digits)
+        {
+//            var temp = Math.Round(action, (int) digits, MidpointRounding.ToEven);
+            var factor = Mathf.Pow(10, digits);
+            var temp = action * factor;
+            temp = Mathf.FloorToInt(temp) / factor;
+            return (float) temp;
+        }
+
+        public static Vector2 StepAction(this Vector2 action, uint digits)
+        {
+            action.x = StepAction(action.x, digits);
+            action.y = StepAction(action.y, digits);
+            return action;
+        }
+
+
         public static void SafeDestroy(this Object obj)
         {
             if (!obj) return;
@@ -64,7 +78,7 @@ namespace marwi.mlagents
         public static void SafeDestroy(this IEnumerable<Object> objs)
         {
             if (objs == null) return;
-            foreach(var obj in objs)
+            foreach (var obj in objs)
                 obj.SafeDestroy();
         }
 
@@ -74,7 +88,7 @@ namespace marwi.mlagents
             var list = new List<Component>();
             foreach (var type in types)
             {
-                if(type == null) continue;
+                if (type == null) continue;
                 var components = obj.GetComponentsInChildren(type);
                 list.AddRange(components);
             }
