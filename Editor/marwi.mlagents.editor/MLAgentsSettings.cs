@@ -66,7 +66,7 @@ namespace AgentUtils.Editor
                 return m_relativeSettingsPath;
             }
         }
-
+        
         public static MLAgentsSettings GetOrCreateSettings()
         {
             var settings = AssetDatabase.LoadAssetAtPath<MLAgentsSettings>(settingsFullPath);
@@ -163,6 +163,7 @@ namespace AgentUtils.Editor
         public string brainNames;
 
         public string runID = "default";
+        public bool trainInEditor = false;
 
         public string anacondaEnvironmentName;
 

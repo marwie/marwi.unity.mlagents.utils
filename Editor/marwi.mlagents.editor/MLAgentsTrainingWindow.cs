@@ -32,7 +32,6 @@ namespace marwi.mlagents.editor
         private MLAgentsSettings settings;
         private Process trainingsProcess;
         private string[] configurationOptions = new string[0];
-        private bool startTrainingInEditor = false;
 
         private void OnEnable()
         {
@@ -145,8 +144,13 @@ namespace marwi.mlagents.editor
 
             
             EditorGUILayout.LabelField("Debug", EditorStyles.boldLabel);
-            // TODO: make work with TrainingScene and Automatically toggling the Control in Academy
-            startTrainingInEditor = EditorGUILayout.ToggleLeft("Start Training in Editor", startTrainingInEditor);
+            if (settings.ActiveConfiguration != null)
+            {
+                settings.ActiveConfiguration.trainInEditor = EditorGUILayout.ToggleLeft("Start Training in Editor", settings.ActiveConfiguration.trainInEditor);
+            }
+            
+            if(GUILayout.Button("Recover Process"))
+                TryRegainPrevTrainingProcess();
 
             EditorGUILayout.BeginVertical();
             GUILayout.FlexibleSpace();
@@ -181,14 +185,16 @@ namespace marwi.mlagents.editor
             StartTrainingProcess(GetTrainingArguments(inEditor) + " --load");
         }
 
+        public const string ML_AGENTS_ARGS_BASE = "mlagents-learn";
+        
         private string GetTrainingArguments(bool inEditor = false)
         {
-            var args = $@"mlagents-learn {settings.ActiveConfiguration.ConfigParam} --train";
+            var args = $@"{ML_AGENTS_ARGS_BASE} {settings.ActiveConfiguration.ConfigParam} --train";
             // prepend anaconda
             if (!string.IsNullOrWhiteSpace(settings.ActiveConfiguration.anacondaEnvironmentName))
                 args = $"activate {settings.ActiveConfiguration.anacondaEnvironmentName} && {args}";
 
-            if (!inEditor && !startTrainingInEditor && settings.ActiveConfiguration.ExecuteableExists)
+            if (!inEditor && !settings.ActiveConfiguration.trainInEditor && settings.ActiveConfiguration.ExecuteableExists)
                 args = $"{args} --env={settings.ActiveConfiguration.ExecuteableParam}";
 
             if (!string.IsNullOrWhiteSpace(settings.ActiveConfiguration.runID))
@@ -211,19 +217,31 @@ namespace marwi.mlagents.editor
             if (this.ProcessIsRunning) return;
             try
             {
+                Log($"Try Recover Process {this.settings.lastTrainingProcessID}");
                 if (this.settings.lastTrainingProcessID != -1)
                 {
                     this.trainingsProcess = Process.GetProcessById(settings.lastTrainingProcessID);
+                    if (!this.trainingsProcess.ProcessName.Contains(ML_AGENTS_ARGS_BASE))
+                    {
+                        Debug.LogWarning($"Recovered Process is not a ml-agents training process {this.trainingsProcess.ProcessName}, {this.trainingsProcess.Id}");
+                        this.trainingsProcess = null;
+                        return;
+                    }
+                    
                     RegisterTrainingProcessOutput();
-                    Log("Recovered Process: " + this.trainingsProcess.ProcessName + ", " + this.trainingsProcess.Id);
+                    Log("<b>Recovered Process: " + this.trainingsProcess.ProcessName + "</b>, " + this.trainingsProcess.Id);
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-//                Debug.LogError(e);
-//                settings.lastTrainingProcessID = -1;
+                Debug.LogError(e);
                 this.trainingsProcess = null;
-                // ignored
+                
+                // TODO: recover process by name
+//                var processlist = Process.GetProcesses();
+//                foreach(var proc in processlist){
+//                    Debug.Log($"{proc.ProcessName}, {proc.Id}, {proc.MainWindowTitle}");
+//                }
             }
         }
 

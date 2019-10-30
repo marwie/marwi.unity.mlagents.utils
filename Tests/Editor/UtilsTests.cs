@@ -49,7 +49,7 @@ namespace mlagentsUtilsTests
             Assert.AreEqual(.5f, 0.55f.StepAction(1), FLOAT_THRESHOLD);
             Assert.AreEqual(.5f, 0.57f.StepAction(1), FLOAT_THRESHOLD);
             Assert.AreEqual(.4f, 0.49f.StepAction(1), FLOAT_THRESHOLD);
-            Assert.AreEqual(-.5f, -0.53f.StepAction(1), FLOAT_THRESHOLD);
+            Assert.AreEqual(-.5f, -0.59321f.StepAction(1), FLOAT_THRESHOLD);
             Assert.AreEqual(-.53f, -0.5365f.StepAction(2), FLOAT_THRESHOLD);
             Assert.AreEqual(.555f, 0.555222f.StepAction(3), FLOAT_THRESHOLD);
             Assert.AreEqual(1.555f, 1.555222f.StepAction(3), FLOAT_THRESHOLD);
