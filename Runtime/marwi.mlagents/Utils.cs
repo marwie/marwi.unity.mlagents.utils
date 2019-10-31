@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
@@ -9,6 +10,23 @@ namespace marwi.mlagents
     public static class Utils
     {
         public static float MaxComponent(this Vector3 vec) => Mathf.Max(vec.x, Mathf.Max(vec.y, vec.z));
+
+        public static float LongestComponent(this Vector3 vec)
+        {
+            var longest = 0f;
+            var value = 0f;
+            for (var i = 0; i < 3; i++)
+            {
+                var e = vec[i];
+                var length = Mathf.Abs(e);
+                if (length > longest)
+                {
+                    value = e;
+                    longest = length;
+                }
+            }
+            return value;
+        }
 
         public static Vector3 RandomBetween(Vector3 min, Vector3 max) => new Vector3(Mathf.Lerp(min.x, max.x, Random.value),
             Mathf.Lerp(min.y, max.y, Random.value), Mathf.Lerp(min.z, max.z, Random.value));
