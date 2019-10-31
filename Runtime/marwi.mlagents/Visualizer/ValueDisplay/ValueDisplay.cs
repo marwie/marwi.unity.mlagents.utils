@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net.Mime;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,9 +32,9 @@ namespace marwi.mlagents.Visualizer
             valueField.text = "";
             for (var i = 0; i < values.Count; i++)
             {
-                valueField.text += values[i].ToString(decimalString);
+                valueField.text += values[i].ToString(decimalString, CultureInfo.InvariantCulture);
                 if (i < values.Count - 1)
-                    valueField.text += ", ";
+                    valueField.text += " ";
             }
         }
 

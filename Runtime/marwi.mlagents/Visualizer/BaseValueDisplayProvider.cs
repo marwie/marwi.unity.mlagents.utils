@@ -12,12 +12,21 @@ namespace marwi.mlagents.Visualizer
 
         private void Awake()
         {
-            decimalsStr = $"N{Decimals}";
+            SetupDecimals();
         }
 
         private void OnValidate()
         {
-            decimalsStr = $"N{Decimals}";
+            SetupDecimals();
+        }
+
+        private void SetupDecimals()
+        {
+            decimalsStr = "0";
+            for (var i = 0; i < Decimals; i++)
+            {
+                decimalsStr += i == 0 ? ".0" : "0";
+            }
         }
 
         private readonly Dictionary<string, List<float>> values = new Dictionary<string, List<float>>();
@@ -50,13 +59,6 @@ namespace marwi.mlagents.Visualizer
                     if (instance != null)
                         instances.Add(key, instance);
                 }
-
-//                if (instance == null)
-//                {
-//                    if (instances.ContainsKey(key))
-//                        instances.Remove(key);
-//                    continue;
-//                }
 
                 if (!instance.enabled) continue;
 

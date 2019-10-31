@@ -32,7 +32,7 @@ namespace marwi.mlagents
         private void InternalUpdateObservation(Visualizsation viz, string name, float value)
         {
             if (!enabled) return;
-            
+
             InternalCleanup();
 
             if (!monitoring.TryGetValue(viz, out var visualizer))
@@ -75,10 +75,13 @@ namespace marwi.mlagents
 
         private void OnEnable()
         {
+#if UNITY_EDITOR
             if (!canvas) canvas = Instantiate(CanvasTemplate, this.transform);
             if (!layout) layout = Instantiate(LayoutTemplate, canvas);
             canvas.rotation = Quaternion.identity;
+            InitialCanvasPosition(canvas);
             SetupDisplayProviders();
+#endif
         }
 
 #if UNITY_EDITOR
@@ -94,10 +97,12 @@ namespace marwi.mlagents
                 Destroy(canvas);
         }
 
+#if UNITY_EDITOR
         private void LateUpdate()
         {
             foreach (var monitored in monitoring.Values) monitored.UpdateLayout(layout);
         }
+#endif
 
         private void SetupDisplayProviders()
         {
@@ -105,6 +110,17 @@ namespace marwi.mlagents
 #if UNITY_EDITOR
             if (this.displayProviders.Length <= 0) this.displayProviders = new[] {this.gameObject.AddComponent<ValueDisplayProvider>()};
 #endif
+        }
+
+        private void InitialCanvasPosition(RectTransform canvas)
+        {
+            var meshRenderer = this.GetComponentsInChildren<MeshRenderer>();
+            var bounds = new Bounds(transform.position, Vector3.zero);
+            foreach (var rend in meshRenderer)
+                bounds.Encapsulate(rend.bounds);
+            canvas.transform.position = bounds.center + .6f * bounds.size.y * Vector3.up;
+            // ReSharper disable once Unity.InefficientPropertyAccess
+            canvas.transform.localScale = .01f * bounds.size.magnitude * Vector3.one;
         }
     }
 }
