@@ -37,7 +37,7 @@ namespace AgentUtils.Editor
                     foreach (var guid in settingsInstances)
                     {
                         var path = AssetDatabase.GUIDToAssetPath(guid);
-                        if (path.ToLowerInvariant().StartsWith("assets", StringComparison.Ordinal))
+                        if (path.StartsWith("Assets", StringComparison.Ordinal))
                         {
                             m_relativeSettingsPath = path;
 //                        Debug.Log($"Resolved ML-Agents Settings at \"{m_relativeSettingsPath}\"");
@@ -48,17 +48,6 @@ namespace AgentUtils.Editor
                     if (!SettingsExist)
                     {
                         m_relativeSettingsPath = $"Assets/ML-Agents-Settings.asset"; 
-//                        var scriptGuids = AssetDatabase.FindAssets(nameof(MLAgentsSettings));
-//                        foreach (var guid in scriptGuids)
-//                        {
-//                            var path = AssetDatabase.GUIDToAssetPath(guid);
-//                            if (path.EndsWith(".cs"))
-//                            {
-//                                m_relativeSettingsPath = $"{path.Substring(0, path.LastIndexOf('/'))}/ML-Agents-Settings.asset";
-//                                Debug.Log($"Create ML Agents Settings at \"{m_relativeSettingsPath}\"");
-//                                break;
-//                            }
-//                        }
                     }
                 }
 
@@ -66,7 +55,7 @@ namespace AgentUtils.Editor
                 return m_relativeSettingsPath;
             }
         }
-
+        
         public static MLAgentsSettings GetOrCreateSettings()
         {
             var settings = AssetDatabase.LoadAssetAtPath<MLAgentsSettings>(settingsFullPath);
@@ -110,12 +99,14 @@ namespace AgentUtils.Editor
 //            return true;
 //        }
 
+
         private void OnCreate()
         {
             lastTrainingProcessID = -1;
         }
 
         [SerializeField] public int lastTrainingProcessID = -1;
+        [SerializeField] public string lastTrainingsProcessArgs = null;
 
         public bool HasActiveConfiguration => ActiveConfiguration != null;
         public TrainingsConfiguration ActiveConfiguration => Configurations.FirstOrDefault(c => c.isActive);
@@ -163,6 +154,7 @@ namespace AgentUtils.Editor
         public string brainNames;
 
         public string runID = "default";
+        public bool trainInEditor = false;
 
         public string anacondaEnvironmentName;
 

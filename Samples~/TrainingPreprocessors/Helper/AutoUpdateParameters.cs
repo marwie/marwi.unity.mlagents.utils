@@ -8,6 +8,7 @@ namespace Helper
     public class AutoUpdateParameters : MonoBehaviour
     {
 #if UNITY_EDITOR
+#pragma warning disable 0649
         [SerializeField] private Academy Academy;
         [SerializeField] private Curriculum Curriculum;
         [SerializeField] private int DefaultLevel = 0;
@@ -39,6 +40,7 @@ namespace Helper
                 }
             }
         }
+#pragma warning restore 0649
 #endif
     }
 }

@@ -7,7 +7,7 @@ namespace marwi.mlagents
     {
         private void OnEnable()
         {
-            
+            // just to show the enable toggle in editor
         }
     }
 }

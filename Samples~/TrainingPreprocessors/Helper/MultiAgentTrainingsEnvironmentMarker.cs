@@ -1,10 +1,6 @@
-using System;
-using System.Linq;
-using System.Security.Cryptography;
 using marwi.mlagents;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Helper
 {
@@ -14,10 +10,18 @@ namespace Helper
     [ExecuteInEditMode]
     public class MultiAgentTrainingsEnvironmentMarker : MonoBehaviour
     {
+        public enum CopyPattern
+        {
+            X = 0,
+            XZ = 1
+        }
+        
 #if UNITY_EDITOR
 #pragma warning disable CS0649
         [SerializeField] private Transform Environment;
-        [SerializeField] private int CopyCount = 0;
+        [SerializeField] private uint CopyCount = 0;
+        [SerializeField] private CopyPattern Pattern = CopyPattern.X;
+        [SerializeField, Range(0, 1)] private float BoundsOverlap = 0f;
 #pragma warning restore CS0649
 
         public enum EnterPlayModeBehaviour
@@ -35,9 +39,15 @@ namespace Helper
         [HideInInspector, SerializeField] private Transform copyTarget;
         [HideInInspector, SerializeField] private GameObject environmentTemplate;
 
-        public int Count => CopyCount;
+        public int Count => (int)(CopyCount);
 
         [ContextMenu(nameof(CreateCopies))]
+        public void CreateCopiesAndShow()
+        {
+            CreateCopies();
+            SetVisibility(true);
+        }
+
         public void CreateCopies()
         {
             if (!Environment) return;
@@ -46,9 +56,16 @@ namespace Helper
             var environmentRenderer = Environment.GetComponentsInChildren<MeshRenderer>();
             foreach (var rend in environmentRenderer)
                 totalBounds.Encapsulate(rend.bounds);
+            var rendererBoundsSize = totalBounds.extents;
+            var agentBounds = Environment.GetComponentsInChildren<AgentEnvironmentBounds>();
+            foreach (var ab in agentBounds)
+                totalBounds.Encapsulate(ab.Bounds);
+            totalBounds.extents = Vector3.Lerp(totalBounds.extents, rendererBoundsSize, BoundsOverlap);
+
+
+            DestroyCopies();
 
             if (!copyTarget) copyTarget = new GameObject(Environment.name + "-Copies").transform;
-            DestroyCopies();
 
             // clean environment of any scripts we dont want in our copies
             environmentTemplate.SafeDestroy();
@@ -62,23 +79,60 @@ namespace Helper
             ).SafeDestroy();
 
             // create copies
-            for (var i = 0; i < CopyCount; i++)
-            {
-                var instance = Instantiate(environmentTemplate, copyTarget, false);
-                if (!instance || instance == null)
-                {
-                    Debug.LogWarning("Failed to create Environment Instance for " + Environment.name, this);
-                    break;
-                }
-
-                instance.transform.position = Environment.transform.position + new Vector3(totalBounds.size.x * 1.1f * (i + 1), 0, 0);
-            }
+            InstantiateCopies(totalBounds, environmentTemplate);
 
             // cleanup
             environmentTemplate.SafeDestroy();
             HideAndDisablePickingOfCopiedEnvironments();
             if (copyTarget)
                 Debug.Log("Created " + copyTarget.childCount + " Training Copies of " + Environment.name, this);
+        }
+
+        private void InstantiateCopies(Bounds totalBounds, GameObject template)
+        {
+            switch (Pattern)
+            {
+                default:
+                case CopyPattern.X:
+                    for (var i = 0; i < CopyCount; i++)
+                    {
+                        var instance = Instantiate(template, copyTarget, false);
+                        if (!instance || instance == null)
+                        {
+                            Debug.LogWarning("Failed to create Environment Instance for " + Environment.name, this);
+                            break;
+                        }
+
+                        instance.transform.position = Environment.transform.position + new Vector3(totalBounds.size.x * (i + 1), 0, 0);
+                    }
+                    break;
+                case CopyPattern.XZ:
+                    var count = Mathf.CeilToInt(Mathf.Sqrt(CopyCount));
+                    var instances = 0;
+                    var failed = false;
+                    for (var z = 0; z < count; z++)
+                    {
+                        if (failed) break;
+                        if (instances >= CopyCount) break;
+                        for (var x = 0; x < count; x++)
+                        {
+                            if (instances >= CopyCount) break;
+                            var instance = Instantiate(template, copyTarget, false);
+                            if (!instance || instance == null)
+                            {
+                                Debug.LogWarning("Failed to create Environment Instance for " + Environment.name, this);
+                                failed = true;
+                                break;
+                            }
+
+                            var offset = new Vector3(totalBounds.size.x * x, 0, totalBounds.size.z * z);
+                            instance.transform.position = Environment.transform.position + offset;
+                            ++instances;
+                        }
+                    }
+                    break;
+            }
+            
         }
 
         [ContextMenu(nameof(DestroyCopies))]
@@ -105,8 +159,18 @@ namespace Helper
         {
             if (copyTarget == null)
                 return;
-            SceneVisibilityManager.instance.Hide(copyTarget.gameObject, true);
+            SetVisibility(false);
             SceneVisibilityManager.instance.DisablePicking(copyTarget.gameObject, true);
+        }
+
+        private void SetVisibility(bool visible)
+        {
+            if (copyTarget == null)
+                return;
+            if (!visible)
+                SceneVisibilityManager.instance.Hide(copyTarget.gameObject, true);
+            else 
+                SceneVisibilityManager.instance.Show(copyTarget.gameObject, true);
         }
 
         private void OnEnable()

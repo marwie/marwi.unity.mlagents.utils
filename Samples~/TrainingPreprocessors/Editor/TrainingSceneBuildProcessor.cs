@@ -1,6 +1,8 @@
 using System;
 using UnityEditor;
 using System.Runtime.CompilerServices;
+using AgentUtils.Editor;
+using marwi.mlagents.editor;
 using UnityEngine.SceneManagement;
 using UnityEditor.Build.Reporting;
 using MLAgents;
@@ -26,7 +28,14 @@ namespace marwi.mlagents.utils
             switch (obj)
             {
                 case PlayModeStateChange.ExitingEditMode:
-                    SetAcademyBrainsControlled(false);
+                    
+                    var controlled = false;
+                    
+                    var settings = MLAgentsSettings.GetOrCreateSettings();
+                    if (settings.ActiveConfiguration != null && settings.ActiveConfiguration.trainInEditor)
+                        controlled = true;
+                    
+                    SetAcademyBrainsControlled(controlled);
                     break;
             }
         }
@@ -46,7 +55,7 @@ namespace marwi.mlagents.utils
                 Academy academy = null;
                 foreach (var root in scene.GetRootGameObjects())
                 {
-                    if (!marker || !marker.enabled)
+                    if (!marker || marker == null || !marker.enabled)
                         marker = root.GetComponentInChildren<TrainingSceneMarker>();
                     if (!academy)
                         academy = root.GetComponentInChildren<Academy>();
@@ -54,7 +63,7 @@ namespace marwi.mlagents.utils
                         break;
                 }
 
-                if (!marker || !marker.enabled || !academy || academy == null) continue;
+                if (!marker || marker == null || !marker.enabled || !academy || academy == null) continue;
                 foreach (var hub in academy.broadcastHub.broadcastingBrains)
                 {
                     Debug.Log("Set Controlled: " + hub.name + ", " + controlled, academy);

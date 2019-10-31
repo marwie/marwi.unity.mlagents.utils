@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Security;
+using System.Diagnostics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
@@ -9,6 +9,27 @@ namespace marwi.mlagents
 {
     public static class Utils
     {
+        public static float MaxComponent(this Vector3 vec) => Mathf.Max(vec.x, Mathf.Max(vec.y, vec.z));
+
+        public static float LongestComponent(this Vector3 vec)
+        {
+            var longest = 0f;
+            var value = 0f;
+            for (var i = 0; i < 3; i++)
+            {
+                var e = vec[i];
+                var length = Mathf.Abs(e);
+                if (length > longest)
+                {
+                    value = e;
+                    longest = length;
+                }
+            }
+            return value;
+        }
+
+        public static float ToAbs(this float val) => Mathf.Abs(val);
+
         public static Vector3 RandomBetween(Vector3 min, Vector3 max) => new Vector3(Mathf.Lerp(min.x, max.x, Random.value),
             Mathf.Lerp(min.y, max.y, Random.value), Mathf.Lerp(min.z, max.z, Random.value));
 
@@ -18,7 +39,7 @@ namespace marwi.mlagents
         public static Vector3 Modulo(this Vector3 vec, Vector3 mod) => new Vector3(vec.x % mod.x, vec.y % mod.y, vec.z % mod.z);
         public static Vector3 Modulo(this Vector3 vec, float mod) => new Vector3(vec.x % mod, vec.y % mod, vec.z % mod);
 
-        public static Vector3 CenterEulerAngleDifference(Vector3 vec)
+        public static Vector3 CenterEulerAngleDifference(this Vector3 vec)
         {
             vec += Vector3.one * 180;
             vec = vec.Modulo(360);
@@ -31,9 +52,41 @@ namespace marwi.mlagents
             vec -= Vector3.one * 180;
             return vec;
         }
-        
-        
-        
+
+        public static float ThresholdAction(this float action, float threshold)
+        {
+            if (action >= threshold)
+                action = 1;
+            else if (action <= -threshold)
+                action = -1;
+            else action = 0;
+            return action;
+        }
+
+        public static Vector2 ThresholdAction(this Vector2 action, float threshold)
+        {
+            action.x = ThresholdAction(action.x, threshold);
+            action.y = ThresholdAction(action.y, threshold);
+            return action;
+        }
+
+        public static float StepAction(this float action, uint digits)
+        {
+//            var temp = Math.Round(action, (int) digits, MidpointRounding.ToEven);
+            var factor = Mathf.Pow(10, digits);
+            var temp = action * factor;
+            temp = Mathf.FloorToInt(temp) / factor;
+            return (float) temp;
+        }
+
+        public static Vector2 StepAction(this Vector2 action, uint digits)
+        {
+            action.x = StepAction(action.x, digits);
+            action.y = StepAction(action.y, digits);
+            return action;
+        }
+
+
         public static void SafeDestroy(this Object obj)
         {
             if (!obj) return;
@@ -47,7 +100,7 @@ namespace marwi.mlagents
         public static void SafeDestroy(this IEnumerable<Object> objs)
         {
             if (objs == null) return;
-            foreach(var obj in objs)
+            foreach (var obj in objs)
                 obj.SafeDestroy();
         }
 
@@ -57,7 +110,7 @@ namespace marwi.mlagents
             var list = new List<Component>();
             foreach (var type in types)
             {
-                if(type == null) continue;
+                if (type == null) continue;
                 var components = obj.GetComponentsInChildren(type);
                 list.AddRange(components);
             }
