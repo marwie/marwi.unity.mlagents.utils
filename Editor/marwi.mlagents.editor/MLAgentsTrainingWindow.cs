@@ -44,23 +44,26 @@ namespace marwi.mlagents.editor
             settings = MLAgentsSettings.GetOrCreateSettings();
             settings.Changed += OnSettingsChanged;
             TryRegainPrevTrainingProcess();
+            ProcessRecoverLoop();
+        }
+
+        private async void ProcessRecoverLoop()
+        {
+            while (this)
+            {
+                await Task.Delay(3000);
+                if (!ProcessIsRunning)
+                {
+                    TryRegainPrevTrainingProcess();
+                }
+            }
         }
 
         private void OnSettingsChanged()
         {
             configurationOptions = null;
         }
-
-
-        private void Log(string msg)
-        {
-            Debug.Log(msg);
-        }
-
-        private void LogWarning(string msg)
-        {
-            Debug.LogWarning(msg);
-        }
+        
 
         private void OnGUI()
         {
@@ -133,7 +136,7 @@ namespace marwi.mlagents.editor
                 {
                     foreach (var (source, target) in settings.ActiveConfiguration.EnumerateBrainModelPaths())
                     {
-                        Log("Copy Brain from \"" + source + "\" to \"" + target + "\"");
+                        Debug.Log("Copy Brain from \"" + source + "\" to \"" + target + "\"");
                         File.Copy(source, target, true);
                     }
                 }
@@ -160,12 +163,12 @@ namespace marwi.mlagents.editor
                 TryRegainPrevTrainingProcess();
             EditorGUI.EndDisabledGroup();
 
-            if (GUILayout.Button("Remove Process Info"))
-            {
-                this.trainingsProcess = null;
-                this.settings.lastTrainingProcessID = 0;
-            }
-
+//            if (GUILayout.Button("Remove Process"))
+//            {
+//                this.trainingsProcess = null;
+//                this.settings.lastTrainingProcessID = -1;
+//            }
+            
             EditorGUILayout.BeginVertical();
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndVertical();
@@ -217,7 +220,7 @@ namespace marwi.mlagents.editor
             {
                 if (settings.ActiveConfiguration.TryCreateCurriculumFileAndGetPathParam(out var curriculumParam))
                     args += $" --curriculum={curriculumParam}";
-                else LogWarning("Could not create curriculum file");
+                else Debug.LogWarning("Could not create curriculum file");
             }
 
             return args;
@@ -240,7 +243,7 @@ namespace marwi.mlagents.editor
                         if (!this.trainingsProcess.HasExited)
                         {
                             RegisterTrainingProcessOutput();
-                            Log("<b>Recovered Process: " + this.trainingsProcess.ProcessName + "</b> from ID " + this.trainingsProcess.Id);
+                            Debug.Log("<b>Recovered Process: " + this.trainingsProcess.ProcessName + "</b> from ID " + this.trainingsProcess.Id);
                             return;
                         }
                     }
@@ -267,7 +270,7 @@ namespace marwi.mlagents.editor
                     var process = WinHandleUtility.GetWindowHandleProcess(w);
                     this.settings.lastTrainingProcessID = process.Id;
                     this.trainingsProcess = process;
-                    Log("<b>Recovered Process: " + windowTitle + "</b>; " + this.trainingsProcess.Id);
+                    Debug.Log("<b>Recovered Process: " + windowTitle + "</b>; " + this.trainingsProcess.Id);
                     return;
                 }
             }
@@ -311,8 +314,8 @@ namespace marwi.mlagents.editor
 
             RegisterTrainingProcessOutput();
 
-            Log("-----------------------");
-            Log($"Started Training {process.ProcessName} - ID: {process.Id} \n{info.WorkingDirectory}\n{info.Arguments}");
+            Debug.Log("-----------------------");
+            Debug.Log($"Started Training {process.ProcessName} - ID: {process.Id} \n{info.WorkingDirectory}\n{info.Arguments}");
         }
         
 
@@ -324,14 +327,14 @@ namespace marwi.mlagents.editor
 
             if (this.trainingsProcess.StartInfo.RedirectStandardOutput)
             {
-                Log("Begin Output Read");
+                Debug.Log("Begin Output Read");
                 this.trainingsProcess.BeginOutputReadLine();
                 this.trainingsProcess.OutputDataReceived += OnOutput;
             }
 
             if (this.trainingsProcess.StartInfo.RedirectStandardError)
             {
-                Log("Begin Error Read");
+                Debug.Log("Begin Error Read");
                 this.trainingsProcess.BeginErrorReadLine();
                 this.trainingsProcess.ErrorDataReceived += OnError;
             }
@@ -345,13 +348,13 @@ namespace marwi.mlagents.editor
 //            trainingsProcess.CloseMainWindow();
             StopProgramByAttachingToItsConsoleAndIssuingCtrlCEvent(trainingsProcess, 1300);
             if (!ProcessIsRunning)
-                Log("Stopped Training");
+                Debug.Log("Stopped Training");
         }
 
         private void OnOutput(object sender, DataReceivedEventArgs e)
         {
             if (!string.IsNullOrWhiteSpace(e.Data))
-                Log(e.Data);
+                Debug.Log(e.Data);
         }
 
         private void OnError(object sender, DataReceivedEventArgs e)
@@ -361,7 +364,7 @@ namespace marwi.mlagents.editor
                 var msg = e.Data;
                 if (msg.StartsWith("INFO")) msg = "<b>" + msg + "</b>";
                 else msg = "<color=#777>" + msg + "</color>";
-                Log(msg);
+                Debug.Log(msg);
             }
         }
 
