@@ -21,7 +21,7 @@ namespace marwi.mlagents.editor
         public static MLAgentsTrainingWindow OpenWindow()
         {
             var window = GetWindow<MLAgentsTrainingWindow>();
-            window.titleContent = new GUIContent("ML-Agents-Training");
+            window.titleContent = new GUIContent("ML-Agents-Training", "");
             window.Show();
             return window;
         }
