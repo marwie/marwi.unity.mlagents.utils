@@ -54,6 +54,7 @@ When using Curriculum Learning this script automatically updates parameter names
 
 
 ## Limitations
+- Windows only so far, not tested on MacOS or Linux (feel free to though, I'm happy to fix/help make it work)
 - multi brain training is not tested yet
 - visual observations are not tested/auto update is not implemented
 - imitation learning is not supported yet
