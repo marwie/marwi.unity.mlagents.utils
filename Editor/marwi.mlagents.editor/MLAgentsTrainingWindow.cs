@@ -1,22 +1,14 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AgentUtils.Editor;
-using NUnit.Framework.Constraints;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-using UnityEngine.WSA;
 using Debug = UnityEngine.Debug;
 
 namespace marwi.mlagents.editor
@@ -63,10 +55,13 @@ namespace marwi.mlagents.editor
         {
             configurationOptions = null;
         }
-        
 
+        private Vector2 scroll;
         private void OnGUI()
         {
+//            float width = Screen.width * 30 / 160;
+//            float height = Screen.width * 38 / 160 - Screen.height * 1 / 25;
+//            scroll = EditorGUILayout.BeginScrollView(scroll, false, false, GUILayout.Width(width), GUILayout.Height(height));
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Open Settings")) MLAgentsSettingsRegister.OpenSettings();
             EditorGUILayout.EndHorizontal();
@@ -158,10 +153,6 @@ namespace marwi.mlagents.editor
                 settings.ActiveConfiguration.trainInEditor = EditorGUILayout.ToggleLeft("Start Training in Editor", settings.ActiveConfiguration.trainInEditor);
             }
 
-            EditorGUI.BeginDisabledGroup(this.ProcessIsRunning);
-            if (GUILayout.Button("Recover Process"))
-                TryRegainPrevTrainingProcess();
-            EditorGUI.EndDisabledGroup();
 
 //            if (GUILayout.Button("Remove Process"))
 //            {
@@ -171,14 +162,18 @@ namespace marwi.mlagents.editor
             
             EditorGUILayout.BeginVertical();
             GUILayout.FlexibleSpace();
-            EditorGUILayout.EndVertical();
+            EditorGUILayout.EndVertical(); 
 
-            if (settings.lastTrainingProcessID != -1)
+            if (this.ProcessIsRunning)
             {
-                GUILayout.Space(5);
                 EditorGUILayout.HelpBox("Training Process ID: " + settings.lastTrainingProcessID + "\n" + settings.lastTrainingsProcessArgs, MessageType.Info);
-                GUILayout.Space(10);
             }
+            if (!this.ProcessIsRunning && settings.lastTrainingsProcessArgs != null)
+            {
+                if (GUILayout.Button("Recover Process"))
+                    TryRegainPrevTrainingProcess();
+            }
+            GUILayout.Space(5);
 
 
 //            scroll = EditorGUILayout.BeginScrollView(scroll);
@@ -190,6 +185,7 @@ namespace marwi.mlagents.editor
 //            EditorGUILayout.EndScrollView();
 
             EditorGUI.EndDisabledGroup();
+//            EditorGUILayout.EndScrollView();
         }
 
         private void StartTraining(bool inEditor = false)
@@ -252,7 +248,7 @@ namespace marwi.mlagents.editor
                 {
                     Debug.LogWarning(e);
                     this.trainingsProcess = null;
-                    this.settings.lastTrainingProcessID = -1;
+                    this.settings.lastTrainingProcessID = -1; 
                 }
             }
 
@@ -271,6 +267,8 @@ namespace marwi.mlagents.editor
                     this.settings.lastTrainingProcessID = process.Id;
                     this.trainingsProcess = process;
                     Debug.Log("<b>Recovered Process: " + windowTitle + "</b>; " + this.trainingsProcess.Id);
+                    EditorUtility.SetDirty(settings);
+                    AssetDatabase.SaveAssets();
                     return;
                 }
             }
