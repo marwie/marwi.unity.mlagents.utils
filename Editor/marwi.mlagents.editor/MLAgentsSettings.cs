@@ -37,7 +37,7 @@ namespace AgentUtils.Editor
                     foreach (var guid in settingsInstances)
                     {
                         var path = AssetDatabase.GUIDToAssetPath(guid);
-                        if (path.ToLowerInvariant().StartsWith("assets", StringComparison.Ordinal))
+                        if (path.StartsWith("Assets", StringComparison.Ordinal))
                         {
                             m_relativeSettingsPath = path;
 //                        Debug.Log($"Resolved ML-Agents Settings at \"{m_relativeSettingsPath}\"");
@@ -48,17 +48,6 @@ namespace AgentUtils.Editor
                     if (!SettingsExist)
                     {
                         m_relativeSettingsPath = $"Assets/ML-Agents-Settings.asset"; 
-//                        var scriptGuids = AssetDatabase.FindAssets(nameof(MLAgentsSettings));
-//                        foreach (var guid in scriptGuids)
-//                        {
-//                            var path = AssetDatabase.GUIDToAssetPath(guid);
-//                            if (path.EndsWith(".cs"))
-//                            {
-//                                m_relativeSettingsPath = $"{path.Substring(0, path.LastIndexOf('/'))}/ML-Agents-Settings.asset";
-//                                Debug.Log($"Create ML Agents Settings at \"{m_relativeSettingsPath}\"");
-//                                break;
-//                            }
-//                        }
                     }
                 }
 
@@ -109,6 +98,7 @@ namespace AgentUtils.Editor
 //            AssetDatabase.SaveAssets();
 //            return true;
 //        }
+
 
         private void OnCreate()
         {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -32,12 +33,15 @@ namespace marwi.mlagents.editor
         private Process trainingsProcess;
         private string[] configurationOptions = new string[0];
 
+        private List<string> brainInfo = new List<string>();
+        
         private void OnEnable()
         {
             settings = MLAgentsSettings.GetOrCreateSettings();
             settings.Changed += OnSettingsChanged;
             TryRegainPrevTrainingProcess();
             ProcessRecoverLoop();
+            UpdateBrainSaveDates();
         }
 
         private async void ProcessRecoverLoop()
@@ -58,8 +62,10 @@ namespace marwi.mlagents.editor
         }
 
         private Vector2 scroll;
+
         private void OnGUI()
         {
+        
 //            float width = Screen.width * 30 / 160;
 //            float height = Screen.width * 38 / 160 - Screen.height * 1 / 25;
 //            scroll = EditorGUILayout.BeginScrollView(scroll, false, false, GUILayout.Width(width), GUILayout.Height(height));
@@ -86,6 +92,7 @@ namespace marwi.mlagents.editor
             {
                 settings.SetActiveExclusive(selection - 1);
                 EditorUtility.SetDirty(settings);
+                UpdateBrainSaveDates();
             }
 
             // ReSharper disable once PossibleNullReferenceException
@@ -143,6 +150,12 @@ namespace marwi.mlagents.editor
                 AssetDatabase.Refresh();
             }
 
+            foreach (var brainInfo in brainInfo)
+            {
+                EditorGUILayout.LabelField(brainInfo, EditorStyles.centeredGreyMiniLabel);
+            }
+
+
             EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.Space();
@@ -160,20 +173,23 @@ namespace marwi.mlagents.editor
 //                this.trainingsProcess = null;
 //                this.settings.lastTrainingProcessID = -1;
 //            }
-            
+
             EditorGUILayout.BeginVertical();
             GUILayout.FlexibleSpace();
-            EditorGUILayout.EndVertical(); 
+            EditorGUILayout.EndVertical();
 
             if (this.ProcessIsRunning)
             {
-                EditorGUILayout.HelpBox("Training Process ID: " + settings.lastTrainingProcessID + "\n" + settings.lastTrainingsProcessArgs, MessageType.Info);
+                var infoStr = "Training Process ID: " + settings.lastTrainingProcessID + "\n" + settings.lastTrainingsProcessArgs;
+                EditorGUILayout.HelpBox(infoStr, MessageType.Info);
             }
+
             if (!this.ProcessIsRunning && settings.lastTrainingsProcessArgs != null)
             {
                 if (GUILayout.Button("Recover Process"))
                     TryRegainPrevTrainingProcess();
             }
+
             GUILayout.Space(5);
 
 
@@ -249,7 +265,7 @@ namespace marwi.mlagents.editor
                 {
                     Debug.LogWarning(e);
                     this.trainingsProcess = null;
-                    this.settings.lastTrainingProcessID = -1; 
+                    this.settings.lastTrainingProcessID = -1;
                 }
             }
 
@@ -262,7 +278,7 @@ namespace marwi.mlagents.editor
                     var windowTitle = WinHandleUtility.GetWindowText(w);
                     // for some reason the console app has to spaces after mlagents-learn
                     windowTitle = windowTitle.Replace("  ", " ");
-                    if (!windowTitle.Contains(settings.lastTrainingsProcessArgs)) 
+                    if (!windowTitle.Contains(settings.lastTrainingsProcessArgs))
                         continue;
                     var process = WinHandleUtility.GetWindowHandleProcess(w);
                     this.settings.lastTrainingProcessID = process.Id;
@@ -312,7 +328,7 @@ namespace marwi.mlagents.editor
             process.StartInfo = info;
             process.Start();
             this.trainingsProcess = process;
-            
+
             settings.lastTrainingProcessID = process.Id;
 
             const string argsSeparator = " && ";
@@ -321,10 +337,11 @@ namespace marwi.mlagents.editor
             argsToSave = argsToSave.Replace("  ", " ");
             argsToSave = argsToSave.Trim();
             if (argsToSave.Contains(argsSeparator))
-                settings.lastTrainingsProcessArgs = argsToSave.Substring(argsToSave.LastIndexOf(argsSeparator, StringComparison.Ordinal) + argsSeparator.Length);
-            else 
+                settings.lastTrainingsProcessArgs =
+                    argsToSave.Substring(argsToSave.LastIndexOf(argsSeparator, StringComparison.Ordinal) + argsSeparator.Length);
+            else
                 settings.lastTrainingsProcessArgs = argsToSave;
-            
+
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
 
@@ -332,7 +349,7 @@ namespace marwi.mlagents.editor
 
             Debug.Log($"<b>Started Training</b> id= {process.Id} args= {info.Arguments}");
         }
-        
+
 
         private void RegisterTrainingProcessOutput()
         {
@@ -364,6 +381,19 @@ namespace marwi.mlagents.editor
             StopProgramByAttachingToItsConsoleAndIssuingCtrlCEvent(trainingsProcess, 1300);
             if (!ProcessIsRunning)
                 Debug.Log("Stopped Training");
+            UpdateBrainSaveDates();
+        }
+
+        private void UpdateBrainSaveDates()
+        {
+            brainInfo.Clear();
+            if (settings.ActiveConfiguration == null) return;
+            foreach (var (modelPathAbsolute, assetPathAbsolute) in settings.ActiveConfiguration.EnumerateBrainModelPaths())
+            {
+                var info = new FileInfo(modelPathAbsolute);
+                var time = info.LastWriteTime.ToString("G");
+                brainInfo.Add(info.Name + ": " + time);
+            }
         }
 
         private void OnOutput(object sender, DataReceivedEventArgs e)
