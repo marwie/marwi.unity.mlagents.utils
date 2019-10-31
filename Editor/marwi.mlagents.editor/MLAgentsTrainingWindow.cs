@@ -330,8 +330,7 @@ namespace marwi.mlagents.editor
 
             RegisterTrainingProcessOutput();
 
-            Debug.Log("-----------------------");
-            Debug.Log($"Started Training {process.ProcessName} - ID: {process.Id} \n{info.WorkingDirectory}\n{info.Arguments}");
+            Debug.Log($"<b>Started Training</b> id= {process.Id} args= {info.Arguments}");
         }
         
 

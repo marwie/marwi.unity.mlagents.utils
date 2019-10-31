@@ -76,8 +76,9 @@ namespace marwi.mlagents
         private void OnEnable()
         {
 #if UNITY_EDITOR
-            if (!canvas) canvas = Instantiate(CanvasTemplate, this.transform);
+            if (!canvas) canvas = Instantiate(CanvasTemplate);
             if (!layout) layout = Instantiate(LayoutTemplate, canvas);
+            canvas.name = this.name;
             canvas.rotation = Quaternion.identity;
             InitialCanvasPosition(canvas);
             SetupDisplayProviders();
