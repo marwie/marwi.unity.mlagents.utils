@@ -1,12 +1,9 @@
 using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Diagnostics;
-using System.Linq;
 using marwi.mlagents;
-using MLAgents;
-using UnityEditor;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Helper
 {
@@ -14,6 +11,7 @@ namespace Helper
     {
         private static readonly Dictionary<Component, AgentMonitor> monitors = new Dictionary<Component, AgentMonitor>();
 
+#if UNITY_EDITOR
         [InitializeOnLoadMethod]
         private static void OnInitialize()
         {
@@ -23,12 +21,13 @@ namespace Helper
                     monitors.Clear();
             };
         }
+#endif
 
         public static AgentMonitor GetOrCreateMonitor(Component agent)
         {
             if (!monitors.TryGetValue(agent, out var monitor))
                 monitors.Add(agent, agent.GetComponent<AgentMonitor>() ?? agent.gameObject.AddComponent<AgentMonitor>());
-          
+
             return monitor;
         }
 
@@ -51,11 +50,22 @@ namespace Helper
 //            InternalVisualize(viz, o)
 //        }
 
+        public static Vector2 Visualize(this Vector2 value, string name, Component owner, Visualizsation viz = Visualizsation.PlainValue)
+        {
+#if UNITY_EDITOR
+            InternalVisualize(viz, owner, name, value.x);
+            InternalVisualize(viz, owner, name, value.y);
+#endif
+            return value;
+        }
+
         public static Vector3 Visualize(this Vector3 value, string name, Component owner, Visualizsation viz = Visualizsation.PlainValue)
         {
+#if UNITY_EDITOR
             InternalVisualize(viz, owner, name, value.x);
             InternalVisualize(viz, owner, name, value.y);
             InternalVisualize(viz, owner, name, value.z);
+#endif
             return value;
         }
 

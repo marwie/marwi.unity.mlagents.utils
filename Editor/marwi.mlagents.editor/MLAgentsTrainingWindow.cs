@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -276,6 +277,17 @@ namespace marwi.mlagents.editor
             {
                 Debug.LogWarning(e);
             }
+
+            // ReSharper disable once PossibleMultipleEnumeration
+            var windowsFound = windows.ToArray();
+            if (windowsFound.Length > 0)
+            {
+                Debug.Log($"Failed to recover training, found {windowsFound} matching windows to {settings.lastTrainingsProcessArgs}");
+                foreach (var window in windowsFound)
+                {
+                    Debug.Log(WinHandleUtility.GetWindowText(window));
+                }
+            }
         }
 
         private void StartTrainingProcess(string mlargs)
@@ -300,13 +312,19 @@ namespace marwi.mlagents.editor
             process.StartInfo = info;
             process.Start();
             this.trainingsProcess = process;
+            
             settings.lastTrainingProcessID = process.Id;
 
             const string argsSeparator = " && ";
-            if (mlargs.Contains(argsSeparator))
-                settings.lastTrainingsProcessArgs = mlargs.Substring(mlargs.LastIndexOf(argsSeparator, StringComparison.Ordinal) + argsSeparator.Length);
+            var argsToSave = mlargs;
+            argsToSave = argsToSave.Replace("--load", "");
+            argsToSave = argsToSave.Replace("  ", " ");
+            argsToSave = argsToSave.Trim();
+            if (argsToSave.Contains(argsSeparator))
+                settings.lastTrainingsProcessArgs = argsToSave.Substring(argsToSave.LastIndexOf(argsSeparator, StringComparison.Ordinal) + argsSeparator.Length);
             else 
-                settings.lastTrainingsProcessArgs = mlargs;
+                settings.lastTrainingsProcessArgs = argsToSave;
+            
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
 
