@@ -1,4 +1,12 @@
 
+[0.0.7] - 2019-10-31
+- bugfixes
+- better process recover for windows using window title with last started args
+- added first version of custom agent monitoring
+- in editor training for debugging
+- some more utils
+- added some util code tests
+
 [0.0.6] - 2019-10-29
 - ml global access helper
 - autoxrsetting component
