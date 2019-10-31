@@ -116,6 +116,7 @@ namespace AgentUtils.Editor
         }
 
         [SerializeField] public int lastTrainingProcessID = -1;
+        [SerializeField] public string lastTrainingsProcessArgs = null;
 
         public bool HasActiveConfiguration => ActiveConfiguration != null;
         public TrainingsConfiguration ActiveConfiguration => Configurations.FirstOrDefault(c => c.isActive);

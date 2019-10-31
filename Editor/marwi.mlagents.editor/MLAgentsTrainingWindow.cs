@@ -1,16 +1,22 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using AgentUtils.Editor;
+using NUnit.Framework.Constraints;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.WSA;
 using Debug = UnityEngine.Debug;
 
 namespace marwi.mlagents.editor
@@ -18,7 +24,7 @@ namespace marwi.mlagents.editor
     public class MLAgentsTrainingWindow : EditorWindow
     {
         public static bool IsOpen => GetWindow<MLAgentsTrainingWindow>() != null;
-        
+
         [MenuItem(Namespace.Base + "/Open Training Window")]
         public static MLAgentsTrainingWindow OpenWindow()
         {
@@ -28,7 +34,7 @@ namespace marwi.mlagents.editor
             return window;
         }
 
-        
+
         private MLAgentsSettings settings;
         private Process trainingsProcess;
         private string[] configurationOptions = new string[0];
@@ -65,7 +71,7 @@ namespace marwi.mlagents.editor
 
             GUILayout.Space(6);
             EditorGUILayout.LabelField("Training", EditorStyles.boldLabel);
-            
+
             if (configurationOptions == null || settings.Configurations.Count + 1 != configurationOptions.Length)
             {
                 configurationOptions = new string[settings.Configurations.Count + 1];
@@ -142,24 +148,32 @@ namespace marwi.mlagents.editor
 
             EditorGUILayout.Space();
 
-            
+
             EditorGUILayout.LabelField("Debug", EditorStyles.boldLabel);
             if (settings.ActiveConfiguration != null)
             {
                 settings.ActiveConfiguration.trainInEditor = EditorGUILayout.ToggleLeft("Start Training in Editor", settings.ActiveConfiguration.trainInEditor);
             }
-            
-            if(GUILayout.Button("Recover Process"))
+
+            EditorGUI.BeginDisabledGroup(this.ProcessIsRunning);
+            if (GUILayout.Button("Recover Process"))
                 TryRegainPrevTrainingProcess();
+            EditorGUI.EndDisabledGroup();
+
+            if (GUILayout.Button("Remove Process Info"))
+            {
+                this.trainingsProcess = null;
+                this.settings.lastTrainingProcessID = 0;
+            }
 
             EditorGUILayout.BeginVertical();
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndVertical();
-            
+
             if (settings.lastTrainingProcessID != -1)
             {
                 GUILayout.Space(5);
-                EditorGUILayout.HelpBox("Training Process ID: " + settings.lastTrainingProcessID, MessageType.Info);
+                EditorGUILayout.HelpBox("Training Process ID: " + settings.lastTrainingProcessID + "\n" + settings.lastTrainingsProcessArgs, MessageType.Info);
                 GUILayout.Space(10);
             }
 
@@ -186,7 +200,7 @@ namespace marwi.mlagents.editor
         }
 
         public const string ML_AGENTS_ARGS_BASE = "mlagents-learn";
-        
+
         private string GetTrainingArguments(bool inEditor = false)
         {
             var args = $@"{ML_AGENTS_ARGS_BASE} {settings.ActiveConfiguration.ConfigParam} --train";
@@ -215,44 +229,62 @@ namespace marwi.mlagents.editor
         private void TryRegainPrevTrainingProcess()
         {
             if (this.ProcessIsRunning) return;
+
+            if (this.settings.lastTrainingProcessID > 0)
+            {
+                try
+                {
+                    if (this.settings.lastTrainingProcessID != -1)
+                    {
+                        this.trainingsProcess = Process.GetProcessById(this.settings.lastTrainingProcessID);
+                        if (!this.trainingsProcess.HasExited)
+                        {
+                            RegisterTrainingProcessOutput();
+                            Log("<b>Recovered Process: " + this.trainingsProcess.ProcessName + "</b> from ID " + this.trainingsProcess.Id);
+                            return;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning(e);
+                    this.trainingsProcess = null;
+                    this.settings.lastTrainingProcessID = -1;
+                }
+            }
+
+
+            var windows = WinHandleUtility.FindWindowsWithText(ML_AGENTS_ARGS_BASE);
             try
             {
-                Log($"Try Recover Process {this.settings.lastTrainingProcessID}");
-                if (this.settings.lastTrainingProcessID != -1)
+                foreach (var w in windows)
                 {
-                    this.trainingsProcess = Process.GetProcessById(settings.lastTrainingProcessID);
-                    if (!this.trainingsProcess.ProcessName.Contains(ML_AGENTS_ARGS_BASE))
-                    {
-                        Debug.LogWarning($"Recovered Process is not a ml-agents training process {this.trainingsProcess.ProcessName}, {this.trainingsProcess.Id}");
-                        this.trainingsProcess = null;
-                        return;
-                    }
-                    
-                    RegisterTrainingProcessOutput();
-                    Log("<b>Recovered Process: " + this.trainingsProcess.ProcessName + "</b>, " + this.trainingsProcess.Id);
+                    var windowTitle = WinHandleUtility.GetWindowText(w);
+                    // for some reason the console app has to spaces after mlagents-learn
+                    windowTitle = windowTitle.Replace("  ", " ");
+                    if (!windowTitle.Contains(settings.lastTrainingsProcessArgs)) 
+                        continue;
+                    var process = WinHandleUtility.GetWindowHandleProcess(w);
+                    this.settings.lastTrainingProcessID = process.Id;
+                    this.trainingsProcess = process;
+                    Log("<b>Recovered Process: " + windowTitle + "</b>; " + this.trainingsProcess.Id);
+                    return;
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError(e);
-                this.trainingsProcess = null;
-                
-                // TODO: recover process by name
-//                var processlist = Process.GetProcesses();
-//                foreach(var proc in processlist){
-//                    Debug.Log($"{proc.ProcessName}, {proc.Id}, {proc.MainWindowTitle}");
-//                }
+                Debug.LogWarning(e);
             }
         }
 
-        private void StartTrainingProcess(string args)
+        private void StartTrainingProcess(string mlargs)
         {
             StopTrainingProcess();
             var process = new Process();
             var info = new ProcessStartInfo();
             info.FileName = "cmd.exe";
             info.WorkingDirectory = settings.ActiveConfiguration.AbsolutePathToMlAgentsDir;
-            info.Arguments = $"/K {args}";
+            info.Arguments = $"/K {mlargs}";
             info.UseShellExecute = true;
             info.RedirectStandardInput = !info.UseShellExecute;
             info.RedirectStandardOutput = !info.UseShellExecute;
@@ -268,14 +300,21 @@ namespace marwi.mlagents.editor
             process.Start();
             this.trainingsProcess = process;
             settings.lastTrainingProcessID = process.Id;
+
+            const string argsSeparator = " && ";
+            if (mlargs.Contains(argsSeparator))
+                settings.lastTrainingsProcessArgs = mlargs.Substring(mlargs.LastIndexOf(argsSeparator, StringComparison.Ordinal) + argsSeparator.Length);
+            else 
+                settings.lastTrainingsProcessArgs = mlargs;
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
 
             RegisterTrainingProcessOutput();
+
             Log("-----------------------");
-            Log("Started Training \n" + info.WorkingDirectory + "\n" + info.Arguments);
-            Log("Process ID: " + process.Id);
+            Log($"Started Training {process.ProcessName} - ID: {process.Id} \n{info.WorkingDirectory}\n{info.Arguments}");
         }
+        
 
         private void RegisterTrainingProcessOutput()
         {
