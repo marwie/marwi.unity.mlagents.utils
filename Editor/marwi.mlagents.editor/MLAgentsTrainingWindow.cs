@@ -187,7 +187,11 @@ namespace marwi.mlagents.editor
             if (!this.ProcessIsRunning && settings.lastTrainingsProcessArgs != null)
             {
                 if (GUILayout.Button("Recover Process"))
+                {
                     TryRegainPrevTrainingProcess();
+                    if (!ProcessIsRunning)
+                        Debug.Log("Could not recover Trainings Process \"" + settings.lastTrainingsProcessArgs +"\"");
+                }
             }
 
             GUILayout.Space(5);
