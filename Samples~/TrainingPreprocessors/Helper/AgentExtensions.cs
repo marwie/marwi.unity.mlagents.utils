@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.Linq;
 using marwi.mlagents;
 using MLAgents;
+using UnityEditor;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Helper
 {
@@ -12,11 +14,22 @@ namespace Helper
     {
         private static readonly Dictionary<Component, AgentMonitor> monitors = new Dictionary<Component, AgentMonitor>();
 
+        [InitializeOnLoadMethod]
+        private static void OnInitialize()
+        {
+            EditorApplication.playModeStateChanged += s =>
+            {
+                if (s == PlayModeStateChange.ExitingPlayMode || s == PlayModeStateChange.ExitingEditMode)
+                    monitors.Clear();
+            };
+        }
+
         public static AgentMonitor GetOrCreateMonitor(Component agent)
         {
-            if (!monitors.ContainsKey(agent))
+            if (!monitors.TryGetValue(agent, out var monitor))
                 monitors.Add(agent, agent.GetComponent<AgentMonitor>() ?? agent.gameObject.AddComponent<AgentMonitor>());
-            return monitors[agent];
+          
+            return monitor;
         }
 
         public static float Visualize(this float value, string name, Component owner, Visualizsation viz = Visualizsation.PlainValue)
@@ -32,6 +45,11 @@ namespace Helper
             return value;
 #endif
         }
+
+//        public static string Visualize(this string value, string name, Component owner)
+//        {
+//            InternalVisualize(viz, o)
+//        }
 
         public static Vector3 Visualize(this Vector3 value, string name, Component owner, Visualizsation viz = Visualizsation.PlainValue)
         {

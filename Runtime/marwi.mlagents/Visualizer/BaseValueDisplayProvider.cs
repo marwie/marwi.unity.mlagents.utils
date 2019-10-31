@@ -39,7 +39,7 @@ namespace marwi.mlagents.Visualizer
             list.Add(value);
         }
 
-        public void UpdateLayout(RectTransform panel, Component owner)
+        public void UpdateLayout(RectTransform panel)
         {
             foreach (var kvp in values)
             {
@@ -51,7 +51,14 @@ namespace marwi.mlagents.Visualizer
                         instances.Add(key, instance);
                 }
 
-                if (instance == null) continue;
+//                if (instance == null)
+//                {
+//                    if (instances.ContainsKey(key))
+//                        instances.Remove(key);
+//                    continue;
+//                }
+
+                if (!instance.enabled) continue;
 
                 instance.decimalString = this.decimalsStr;
                 instance.OnDisplay(key, kvp.Value);

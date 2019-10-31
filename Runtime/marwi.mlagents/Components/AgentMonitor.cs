@@ -22,8 +22,7 @@ namespace marwi.mlagents
 
         private BaseValueDisplayProvider[] displayProviders;
 
-        private readonly Dictionary<Visualizsation, BaseValueDisplayProvider> monitoring =
-            new Dictionary<Visualizsation, BaseValueDisplayProvider>();
+        private readonly Dictionary<Visualizsation, BaseValueDisplayProvider> monitoring = new Dictionary<Visualizsation, BaseValueDisplayProvider>();
 
         public void Log(string key, float value, Visualizsation visual = Visualizsation.PlainValue)
         {
@@ -33,15 +32,15 @@ namespace marwi.mlagents
         private void InternalUpdateObservation(Visualizsation viz, string name, float value)
         {
             if (!enabled) return;
-
+            
             InternalCleanup();
 
             if (!monitoring.TryGetValue(viz, out var visualizer))
             {
-                foreach (var v in displayProviders)
+                foreach (var provider in displayProviders)
                 {
-                    if (v.Type != viz) continue;
-                    visualizer = v;
+                    if (provider.Type != viz) continue;
+                    visualizer = provider;
                     break;
                 }
 
@@ -49,7 +48,12 @@ namespace marwi.mlagents
                     monitoring.Add(viz, visualizer);
             }
 
-            if (!visualizer || visualizer == null) return;
+            if (!visualizer || visualizer == null)
+            {
+                if (monitoring.ContainsKey(viz))
+                    monitoring.Remove(viz);
+                return;
+            }
 
             visualizer.Append(name, value);
         }
@@ -92,7 +96,7 @@ namespace marwi.mlagents
 
         private void LateUpdate()
         {
-            foreach (var monitored in monitoring.Values) monitored.UpdateLayout(layout, this);
+            foreach (var monitored in monitoring.Values) monitored.UpdateLayout(layout);
         }
 
         private void SetupDisplayProviders()

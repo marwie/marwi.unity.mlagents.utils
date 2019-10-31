@@ -14,6 +14,11 @@ namespace marwi.mlagents.Visualizer
 
         
         public string decimalString { get; set; }
+        
+        public void OnEnable()
+        {
+            
+        }
 
         public void OnDestroy()
         {
@@ -22,7 +27,6 @@ namespace marwi.mlagents.Visualizer
 
         public void OnDisplay(string key, List<float> values)
         {
-            
             nameField.text = key;
             valueField.text = "";
             for (var i = 0; i < values.Count; i++)
